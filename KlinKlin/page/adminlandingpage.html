@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&family=Poppins:wght@300;700&display=swap" rel="stylesheet">
+
+<title>Admin Page</title>
+
+<style>
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:white;
+  overflow:hidden;
+  position:relative;
+}
+
+/* background circle */
+.circle{
+  width:400px;
+  height:400px;
+  background:linear-gradient(180deg,#05558E,#5A8196);
+  border-radius:50%;
+  position:absolute;
+  bottom:-120px;
+  left:-120px;
+  z-index:1;
+}
+
+/* container */
+.container{
+  text-align:center;
+  z-index:2;
+  animation:fadeUp 1s ease;
+  transform:translateY(-60px); /* naikkan posisi biar balance */
+}
+
+/* logo */
+.container img{
+  width:300px;
+  margin-bottom:10px;
+}
+
+/* title */
+h1{
+  font-size:64px;
+  color:#053659;
+  text-shadow:0 4px 4px rgba(0,0,0,.25);
+  margin-bottom:20px;
+}
+
+/* input box */
+.input-box{
+  width:320px;
+  margin:8px auto;
+}
+
+.input-box input{
+  width:100%;
+  padding:12px 20px;
+  border-radius:50px;
+  border:2px solid #5A8196;
+  font-size:18px;
+  font-family:'Poppins',sans-serif;
+  outline:none;
+  transition:.3s;
+}
+
+.input-box input:focus{
+  border-color:#05558E;
+  box-shadow:0 0 8px rgba(5,85,142,.2);
+}
+
+/* login button */
+.masuk{
+  display:inline-block;
+  margin-top:18px;
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:6px;
+  color:#053659;
+  background:none;
+  border:none;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.masuk:hover{
+  opacity:.6;
+  transform:translateY(-2px);
+}
+
+/* animation */
+@keyframes fadeUp{
+  from{
+    opacity:0;
+    transform:translateY(40px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* responsive */
+@media(max-width:768px){
+  h1{
+    font-size:42px;
+  }
+
+  .container img{
+    width:220px;
+  }
+
+  .input-box{
+    width:260px;
+  }
+
+  .masuk{
+    font-size:22px;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="circle"></div>
+
+<div class="container">
+
+<img src="../image/Logo.png" alt="Logo">
+
+<h1>Admin Page</h1>
+
+<form action="dashboard.html" method="POST">
+
+<div class="input-box">
+<input type="text" name="username" placeholder="username" required>
+</div>
+
+<div class="input-box">
+<input type="password" name="password" placeholder="password" required>
+</div>
+
+<button type="submit" class="masuk">
+MASUK
+</button>
+
+</form>
+
+</div>
+
+</body>
+</html>

@@ -23,49 +23,56 @@ class OrderController extends Controller
         return view('pesanan', compact('orders', 'token'));
     }
 
-    // ================= BUAT PESANAN =================
+ // ================= BUAT PESANAN =================
+public function store(Request $request)
+{
+    $data = $request->validate([
+        'nama' => 'required|string|max:100',
+        'phone' => 'required|string|max:20',
+        'alamat_customer' => 'required|string',
+        'alamat_laundry' => 'required|string',
+        'phone_laundry' => 'nullable|string|max:20',
+        'fee' => 'required|integer|min:0',
+        'is_sorted' => 'nullable|boolean',
+        'note' => 'nullable|string',
+        'status' => 'nullable|in:Diproses,Dijemput,Dicuci,Diantar,Selesai',
+        'dokumentasi_pakaian' => 'nullable|url|max:500',
+        'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // input admin: YYYY-MM-DD HH:MM
+    ]);
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'nama' => 'required|string|max:100',
-            'phone' => 'required|string|max:20',
-            'alamat_customer' => 'required|string',
-            'alamat_laundry' => 'required|string',
-            'phone_laundry' => 'nullable|string|max:20',
-            'fee' => 'required|integer|min:0',
-            'is_sorted' => 'nullable|boolean',
-            'note' => 'nullable|string',
-            'status' => 'nullable|in:Diproses,Dijemput,Dicuci,Diantar,Selesai',
+    // default value
+    $data['status'] = $data['status'] ?? 'Diproses';
+    $data['is_sorted'] = $data['is_sorted'] ?? 0;
 
-            // 🔥 dokumentasi = link
-            'dokumentasi_pakaian' => 'nullable|url|max:500',
-        ]);
-
-        // default value
-        $data['status'] = $data['status'] ?? 'Diproses';
-        $data['is_sorted'] = $data['is_sorted'] ?? 0;
-
-        // 🔥 LOGIC: kalau tidak pakai pemilahan → hapus dokumentasi
-        if (!$data['is_sorted']) {
-            $data['dokumentasi_pakaian'] = null;
-        }
-
-        // 🔥 GENERATE TOKEN UNIQUE
-        do {
-            $random = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 6));
-            $token = 'LND-' . $random;
-        } while (Order::where('token', $token)->exists());
-
-        $data['token'] = $token;
-
-        // simpan
-        Order::create($data);
-
-        return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $token);
+    // 🔥 LOGIC: kalau tidak pakai pemilahan → hapus dokumentasi
+    if (!$data['is_sorted']) {
+        $data['dokumentasi_pakaian'] = null;
     }
 
+    // 🔥 GENERATE TOKEN UNIQUE
+    do {
+        $random = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 6));
+        $token = 'LND-' . $random;
+    } while (Order::where('token', $token)->exists());
+
+    $data['token'] = $token;
+
+    // simpan
+    Order::create($data);
+
+    return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $token);
+}
+
     // ================= ADMIN =================
+
+     // ================= DASHBOARD ADMIN =================
+    public function adminDashboard()
+    {
+        $totalPesanan = Order::count();
+        $totalPemasukan = Order::where('status', 'Selesai')->sum('fee');
+
+        return view('adminindex', compact('totalPesanan', 'totalPemasukan'));
+    }
 
     public function adminOrders(Request $request)
     {
@@ -100,7 +107,7 @@ class OrderController extends Controller
         return view('adminDetailOrder', compact('order'));
     }
 
-    public function update(Request $request, $id)
+public function update(Request $request, $id)
 {
     $order = Order::findOrFail($id);
 
@@ -113,26 +120,23 @@ class OrderController extends Controller
         'status' => 'required|in:Diproses,Dijemput,Dicuci,Diantar,Selesai',
         'fee' => 'required|numeric',
         'note' => 'nullable|string',
-        'dokumentasi_pakaian' => 'nullable|string', // varchar di DB
-        'is_sorted' => 'nullable', // dari select
+        'dokumentasi_pakaian' => 'nullable|string',
+        'is_sorted' => 'nullable',
+        'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // ✅ tambahkan field baru
     ]);
 
     // Konversi select ke integer
     $data['is_sorted'] = (int) $request->input('is_sorted', 0);
 
-    // update ke DB
+    // 🔥 LOGIC: kalau tidak pakai pemilahan → hapus dokumentasi
+    if (!$data['is_sorted']) {
+        $data['dokumentasi_pakaian'] = null;
+    }
+
+    // Update database
     $order->update($data);
 
     return redirect()->route('admin.orders')
         ->with('success', 'Pesanan berhasil diupdate');
 }
-
-    public function adminDashboard()
-    {
-        $totalPesanan = Order::count();
-
-        $totalPemasukan = Order::where('status', 'Selesai')->sum('fee');
-
-        return view('adminindex', compact('totalPesanan', 'totalPemasukan'));
-    }
 }

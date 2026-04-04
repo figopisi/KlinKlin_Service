@@ -83,9 +83,15 @@
                     </div>
 
                     <div class="detail-item">
-                        <strong>Fee</strong>
+                        <strong>Fee (harga total)</strong>
                         <span>Rp {{ number_format($order->fee,0,',','.') }}</span>
                     </div>
+
+                    <div class="detail-item">
+                        <strong>Catatan</strong>
+                        <span>{{ $order->note ?? '-' }}</span>
+                    </div>
+                    
                         <!-- Dokumentasi (hanya jika pemilahan aktif) -->
                     @if($order->is_sorted)
                     <div class="documentation-section">
@@ -118,13 +124,17 @@
                     </div>
 
                     <div class="detail-item">
-                        <strong>Catatan</strong>
-                        <span>{{ $order->note ?? '-' }}</span>
+                        <strong>Pemilahan Pakaian</strong>
+                        <span>{{ $order->is_sorted ? 'Ya' : 'Tidak' }}</span>
                     </div>
 
                     <div class="detail-item">
-                        <strong>Pemilahan Pakaian</strong>
-                        <span>{{ $order->is_sorted ? 'Ya' : 'Tidak' }}</span>
+                        <strong>Tanggal Penjemputan</strong>
+                        <span>
+                            {{ $order->tanggal_penjemputan 
+                                ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->format('d M Y H:i') 
+                                : '-' }}
+                        </span>
                     </div>
 
                     <div class="detail-item">

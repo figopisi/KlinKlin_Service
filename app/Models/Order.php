@@ -25,5 +25,6 @@ class Order extends Model
         'status',
         'token',
         'dokumentasi_pakaian',
+        "tanggal_penjemputan",
     ];
 }

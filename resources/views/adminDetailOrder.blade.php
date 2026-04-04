@@ -8,6 +8,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/css/style.css') }}">
 
+            <!-- Tambahkan Flatpickr CSS & JS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("#tanggal_penjemputan", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                time_24hr: true,
+                defaultDate: "{{ $order->tanggal_penjemputan ?? '' }}",
+            });
+        });
+        </script>
+
     <style>
         .form-grid {
             display: grid;
@@ -158,6 +173,18 @@
                 <div class="form-group">
                     <label>Catatan</label>
                     <textarea name="note">{{ $order->note }}</textarea>
+                </div>
+
+                <!-- Tanggal di jemput -->
+                <div class="form-group">
+                    <label>Tanggal Penjemputan</label>
+                    <input 
+                        type="text" 
+                        id="tanggal_penjemputan" 
+                        name="tanggal_penjemputan" 
+                        value="{{ $order->tanggal_penjemputan ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->format('Y-m-d H:i') : '' }}"
+                        placeholder="Pilih tanggal dan jam"
+                    >
                 </div>
 
               <div class="form-group">

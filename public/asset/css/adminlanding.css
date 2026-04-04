@@ -1,14 +1,3 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&family=Poppins:wght@300;700&display=swap" rel="stylesheet">
-
-<title>Admin Page</title>
-
-<style>
 
 *{
   margin:0;
@@ -50,6 +39,7 @@ body{
 /* logo */
 .container img{
   width:300px;
+  margin-top: 25px;
   margin-bottom:10px;
 }
 
@@ -132,37 +122,3 @@ h1{
     font-size:22px;
   }
 }
-
-</style>
-</head>
-
-<body>
-
-<div class="circle"></div>
-
-<div class="container">
-
-<img src="../image/Logo.png" alt="Logo">
-
-<h1>Admin Page</h1>
-
-<form action="dashboard.html" method="POST">
-
-<div class="input-box">
-<input type="text" name="username" placeholder="username" required>
-</div>
-
-<div class="input-box">
-<input type="password" name="password" placeholder="password" required>
-</div>
-
-<button type="submit" class="masuk">
-MASUK
-</button>
-
-</form>
-
-</div>
-
-</body>
-</html>

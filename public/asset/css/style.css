@@ -1,0 +1,621 @@
+/* ================= VARIABLES & RESET ================= */
+:root {
+    --primary: #053659;
+    --secondary: #05558E;
+    --accent: #F8D23C;
+    --white: #ffffff;
+    --bg-light: #f5f8fb;
+    --transition: all 0.3s ease-in-out;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background: var(--bg-light);
+    color: var(--primary);
+    overflow-x: hidden;
+    line-height: 1.5;
+}
+
+/* ================= FLOATING DECOR ================= */
+.circle-main, .circle-shadow {
+    position: fixed;
+    border-radius: 50%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.circle-main {
+    top: -100px;
+    right: -140px; /* Sesuai kode awalmu */
+    width: clamp(300px, 40vw, 480px);
+    height: clamp(300px, 40vw, 480px);
+    background: linear-gradient(180deg, var(--secondary) 0%, #5A8196 100%);
+    animation: mainFloat 10s ease-in-out infinite;
+}
+
+.circle-shadow {
+    top: -40px;
+    right: -60px;
+    width: clamp(250px, 35vw, 420px);
+    height: clamp(250px, 35vw, 400px);
+    background: radial-gradient(circle, rgba(0,0,0,.18) 0%, rgba(0,0,0,.10) 45%, transparent 70%);
+    animation: shadowFloat 12s ease-in-out infinite;
+}
+
+@keyframes mainFloat {
+    0%, 100% { transform: translate(0,0); }
+    50% { transform: translate(-18px, 20px); }
+}
+
+@keyframes shadowFloat {
+    0%, 100% { transform: translate(0,0); opacity: .25; }
+    50% { transform: translate(-12px, 18px); opacity: .18; }
+}
+
+/* ================= CONTAINER ================= */
+.container {
+    width: min(92%, 1000px);
+    margin: auto;
+    padding: 28px 0 100px;
+    position: relative;
+    z-index: 2;
+}
+
+/* ================= NAVBAR ================= */
+.navbar {
+    display: flex;
+    justify-content: center;
+    gap: clamp(20px, 5vw, 50px);
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.navbar a {
+    text-decoration: none;
+    font-size: 17px;
+    color: #293D98;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.navbar .active { font-weight: 800; border-bottom: 2px solid var(--secondary); }
+.navbar a:hover { opacity: .7; }
+
+/* ================= HERO SECTION ================= */
+.hero {
+    margin-top: 50px;
+    text-align: center; /* Lebih bagus rata tengah untuk mobile-first */
+}
+
+.hero h1 {
+    font-size: clamp(32px, 5vw, 58px);
+    font-weight: 800;
+    text-shadow: 0 3px 6px rgba(0,0,0,.12);
+    line-height: 1.1;
+}
+
+.hero p {
+    font-size: clamp(16px, 2vw, 22px);
+    margin-top: 10px;
+}
+
+/* ================= CARDS (LANDING) ================= */
+.cards {
+    display: flex;
+    gap: 24px;
+    margin-top: 46px;
+    flex-wrap: wrap;
+}
+
+.card {
+    flex: 1 1 420px;
+    background: var(--primary);
+    border-radius: 24px;
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+    box-shadow: 0 8px 18px rgba(0,0,0,.15);
+    transition: var(--transition);
+    overflow: hidden; /* Penting agar gambar tidak bocor */
+}
+
+.card:hover { transform: translateY(-6px); }
+
+/* Gambar Tetap Besar & Dinamis */
+.card img {
+    width: clamp(140px, 15vw, 180px);
+    height: auto;
+    transform: scale(1.35);
+    transform-origin: center;
+    animation: floatGif 4s ease-in-out infinite;
+}
+
+@keyframes floatGif {
+    0%, 100% { transform: scale(1.35) translateY(0); }
+    50% { transform: scale(1.35) translateY(-8px); }
+}
+
+.card-content {
+    text-align: right;
+    max-width: 240px;
+}
+
+.card h3 { font-size: 24px; font-weight: 700; }
+.card p { margin-top: 8px; font-size: 17px; opacity: 0.9; }
+
+.action {
+    margin-top: 14px;
+    color: var(--accent);
+    font-weight: 800;
+    letter-spacing: 1px;
+    font-size: 19px;
+}
+
+/* ================= BIG CARD ================= */
+.big-card {
+    margin-top: 30px;
+    background: var(--primary);
+    border-radius: 24px;
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+    gap: 20px;
+}
+
+.big-left { display: flex; align-items: center; gap: 20px; }
+.big-left img { width: clamp(80px, 10vw, 110px); }
+.big-text h3 { font-size: 22px; }
+.big-btn { color: var(--accent); font-size: 21px; font-weight: 700; cursor: pointer; transition: .2s; }
+
+/* ================= SEARCH BOX (PESANAN) ================= */
+.search-box {
+    display: flex;
+    gap: 12px;
+    margin: 40px 0;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 16px 24px;
+    font-size: 16px;
+    border-radius: 15px;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.search-box button {
+    padding: 16px 28px;
+    background: linear-gradient(90deg, var(--secondary), #5A8196);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* ================= ORDER CARD (DETAIL) ================= */
+.order-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    background: white;
+    border-radius: 24px;
+    padding: 35px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+}
+
+.status-tag {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 6px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    color: white;
+    text-transform: uppercase;
+}
+
+.status-menunggu { background: var(--accent); color: var(--primary); }
+.status-diproses { background: #1D4ED8; }
+.status-selesai { background: #16A34A; }
+
+.detail-item strong { display: block; font-size: 13px; opacity: 0.6; margin-bottom: 4px; text-transform: uppercase; }
+.detail-item span { font-size: 17px; font-weight: 600; }
+
+/* ================= RESPONSIVE FIXES ================= */
+@media (max-width: 900px) {
+    .navbar { gap: 20px; }
+    
+    .card {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .card-content {
+        text-align: center;
+        max-width: 100%;
+        margin-top: 20px;
+    }
+
+    .card img {
+        width: 160px; /* Paksa tetap besar di mobile */
+        transform: scale(1.2); /* Sedikit dikurangi agar tidak overflow */
+    }
+
+    .big-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .search-box { flex-direction: column; }
+    
+    .order-card {
+        grid-template-columns: 1fr;
+        padding-top: 60px; /* Beri ruang untuk status-tag */
+    }
+}
+
+@media (max-width: 480px) {
+    .hero h1 { font-size: 28px; }
+    .card h3 { font-size: 20px; }
+    .status-tag { position: static; display: inline-block; margin-bottom: 15px; }
+}
+
+/* ================= CONTAINER ================= */
+.container{
+    width:min(92%,1000px);
+    margin:auto;
+    padding:40px 0 100px;
+}
+
+/* ================= HEADER ================= */
+h1{
+    font-size:clamp(28px,3vw,42px);
+    font-weight:800;
+    text-align:center;
+    margin-bottom:30px;
+}
+
+/* ================= SEARCH BOX ================= */
+.search-box{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    margin-bottom:40px;
+}
+.search-box input{
+    flex:1;
+    padding:14px 20px;
+    font-size:16px;
+    border-radius:20px;
+    border:1px solid #ccc;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+.search-box input:focus{
+    outline:none;
+    border-color:#05558E;
+    box-shadow:0 0 8px rgba(5,85,142,.35);
+}
+.search-box button{
+    padding:14px 24px;
+    background:linear-gradient(90deg,#3a95d6,#93bcd3);
+    color:white;
+    font-weight:700;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+    transition:.3s;
+}
+.search-box button:hover{
+    opacity:.85;
+    transform:translateY(-2px);
+}
+
+/* ================= ORDER CARD ================= */
+.order-card{
+    position:relative;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    background:#fff;
+    border-radius:24px;
+    padding:28px 32px;
+    color:#053659;
+    box-shadow:0 12px 24px rgba(0,0,0,.12);
+    margin-bottom:30px;
+    transition:.35s;
+    animation:fadeUp 0.5s ease forwards;
+}
+.order-card:hover{
+    transform:translateY(-6px);
+}
+
+/* Status Tag */
+        .status-tag {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .status-diproses { background-color: #374151; }
+        .status-dijemput { background-color: #3B82F6; }
+        .status-dicuci   { background-color: #8B5CF6; }
+        .status-diantar  { background-color: #FACC15; color: #053659; }
+        .status-selesai  { background-color: #16A34A; }
+
+/* ================= DETAIL ITEM TEXT FIX ================= */
+
+.detail-item {
+    margin-bottom: 12px;
+}
+
+/* 1. LABEL (Pesanan, Alamat Laundry, Alamat Customer, dll) */
+/* Kita buat Tebal (Bold) agar tegas sebagai judul kecil */
+.detail-item strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 800; /* ✨ TEBALKAN DI SINI */
+    color: #053659;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+/* 2. DATA DARI DATABASE (Nama, Alamat, Token, dll) */
+/* Kita buat Normal (Tidak Bold) agar bersih dan mudah dibaca */
+.detail-item span {
+    display: block;
+    font-size: 16px;
+    font-weight: 400 !important; /* ✨ JADI NORMAL/HALUS DI SINI */
+    color: #053659;
+    line-height: 1.4;
+    opacity: 0.9; /* Sedikit soft agar kontras dengan label yang bold */
+}
+
+/* ================= RESPONSIVE TEXT ================= */
+@media (max-width: 900px) {
+    .detail-item strong {
+        font-size: 12px; /* Label sedikit kecil di HP agar tidak sumpek */
+    }
+    
+    .detail-item span {
+        font-size: 15px; /* Teks database tetap nyaman dibaca */
+        font-weight: 400;
+    }
+}
+
+/* ================= BACK BUTTON CONTAINER ================= */
+.back-btn-container {
+    display: flex;
+    justify-content: flex-start;
+    /* Memberi jarak bawah agar tidak menempel ke Judul/H1 */
+    margin-bottom: 20px; 
+    /* Opsional: Jika ingin memberi sedikit nafas dari pinggir container */
+    padding-left: 5px; 
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: linear-gradient(90deg, var(--secondary), #5A8196);
+    color: white;
+    font-weight: 700;
+    border-radius: 15px; /* Sesuaikan dengan style card kamu */
+    text-decoration: none;
+    font-size: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: var(--transition);
+}
+
+.back-btn:hover {
+    transform: translateX(-5px); /* Efek geser kiri sedikit saat hover */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    opacity: 0.9;
+}
+
+/* Penyesuaian di Mobile */
+@media (max-width: 900px) {
+    .back-btn-container {
+        /* Di mobile, kadang lebih bagus agak ke tengah sedikit */
+        margin-left: 0; 
+        justify-content: flex-start;
+    }
+    
+    .back-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
+
+/* Not Found */
+.not-found{
+    text-align:center;
+    font-weight:700;
+    font-size:18px;
+    color:#E63946;
+    margin-top:40px;
+}
+
+/* Animations */
+@keyframes fadeUp{
+    0%{opacity:0;transform:translateY(15px);}
+    100%{opacity:1;transform:translateY(0);}
+}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:900px){
+    .search-box{flex-direction:column;}
+    .search-box button{width:100%;}
+    .order-card{
+        grid-template-columns:1fr;
+    }
+}
+
+/* ================= BACK BUTTON ================= */
+.back-btn-container{
+    display:flex;
+    justify-content:flex-start;
+    margin-bottom:25px;
+}
+.back-btn{
+    display:inline-block;
+    padding:10px 24px;
+    background:linear-gradient(90deg,#05558E,#5A8196);
+    color:white;
+    font-weight:700;
+    border-radius:20px;
+    text-decoration:none;
+    box-shadow:0 6px 18px rgba(0,0,0,.12);
+    transition:.3s;
+    font-size:15px;
+}
+.back-btn:hover{
+    transform:translateY(-3px);
+    opacity:.9;
+    box-shadow:0 8px 24px rgba(0,0,0,.18);
+}
+
+/* ================= INFO BOX ================= */
+.info-box{
+    background:#D0E6FF;
+    color:#053659;
+    padding:20px 28px;
+    border-radius:20px;
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+    font-size:16px;
+    line-height:1.6;
+    margin-bottom:30px;
+}
+.info-box p{
+    margin:0;
+}
+.info-box strong{
+    font-weight:700;
+}
+
+/* ================= BUSINESS INFO CONTAINER ================= */
+.business-info-container{
+    background: linear-gradient(135deg, #B0E0FF 0%, #E0F7FF 100%); /* gradient azure pastel */
+    padding:50px 24px;
+    border-radius:32px;
+    margin-top:50px;
+    box-shadow:0 12px 28px rgba(0,0,0,.1);
+    text-align:center; /* judul & section heading ditengah */
+}
+
+.business-info h2{
+    font-size:24px;
+    font-weight:800;
+    color:#05558E;
+    margin-bottom:12px;
+}
+
+.business-info p{
+    font-size:16px;
+    line-height:1.6;
+    color:#053659;
+    margin-bottom:24px;
+    text-align: left;
+}
+
+/* ================= SERVICE CARDS ================= */
+.service-cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+    gap:20px;
+    margin-top:20px;
+}
+
+.service-card{
+    background:#fff;
+    border-radius:24px;
+    padding:24px 20px;
+    text-align:left; /* konten card rata kiri */
+    box-shadow:0 14px 28px rgba(0,0,0,.12);
+    transition:.35s;
+}
+.service-card:hover{
+    transform:translateY(-6px);
+}
+.service-card h3{
+    font-size:18px;
+    font-weight:800;
+    margin-bottom:10px;
+    color:#05558E;
+}
+.service-card p{
+    font-size:15px;
+    line-height:1.6;
+    color:#053659;
+    margin-bottom:8px;
+}
+.service-card ul{
+    padding-left:20px;
+    margin-top:8px;
+    text-align:left;
+}
+.service-card ul li{
+    margin-bottom:6px;
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+    .service-cards{
+        grid-template-columns:1fr;
+    }
+}
+
+/* GRID FORM ADMIN */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+/* SECTION TITLE */
+.section-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #05558E;
+    margin-bottom: 10px;
+}
+
+/* INPUT FIX */
+.detail-item input,
+.detail-item textarea,
+.detail-item select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

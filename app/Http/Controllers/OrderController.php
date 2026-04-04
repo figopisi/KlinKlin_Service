@@ -38,6 +38,8 @@ public function store(Request $request)
         'status' => 'nullable|in:Diproses,Dijemput,Dicuci,Diantar,Selesai',
         'dokumentasi_pakaian' => 'nullable|url|max:500',
         'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // input admin: YYYY-MM-DD HH:MM
+        'jenis_layanan' => 'nullable|string',
+        'estimasi_jumlah_laundry' => 'nullable|string',
     ]);
 
     // default value
@@ -123,6 +125,8 @@ public function update(Request $request, $id)
         'dokumentasi_pakaian' => 'nullable|string',
         'is_sorted' => 'nullable',
         'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // ✅ tambahkan field baru
+        'jenis_layanan' => 'nullable|string',
+        'estimasi_jumlah_laundry' => 'nullable|string',
     ]);
 
     // Konversi select ke integer

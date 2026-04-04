@@ -125,7 +125,8 @@
                     <label>Alamat Customer</label>
                     <textarea name="alamat_customer">{{ $order->alamat_customer }}</textarea>
                 </div>
-
+                
+                <div class="section-title">Laundry</div>
                 <div class="form-group">
                     <label>Alamat Laundry</label>
                     <textarea name="alamat_laundry">{{ $order->alamat_laundry }}</textarea>
@@ -135,6 +136,7 @@
                     <label>Phone Laundry</label>
                     <input type="text" name="phone_laundry" value="{{ $order->phone_laundry }}">
                 </div>
+
             </div>
 
             <!-- RIGHT -->
@@ -158,8 +160,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Fee</label>
-                    <input type="number" name="fee" value="{{ $order->fee }}">
+                    <label>Jenis Layanan</label>
+                    <input type="text" name="jenis_layanan" value="{{ $order->jenis_layanan }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Estimasi Jumlah Laundry</label>
+                    <input type="text" name="estimasi_jumlah_laundry" value="{{ $order->estimasi_jumlah_laundry }}">
                 </div>
 
                 <div class="form-group">
@@ -185,6 +192,11 @@
                         value="{{ $order->tanggal_penjemputan ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->format('Y-m-d H:i') : '' }}"
                         placeholder="Pilih tanggal dan jam"
                     >
+                </div>
+
+                 <div class="form-group">
+                    <label>Fee</label>
+                    <input type="number" name="fee" value="{{ $order->fee }}">
                 </div>
 
               <div class="form-group">

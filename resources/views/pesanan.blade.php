@@ -124,6 +124,16 @@
                     </div>
 
                     <div class="detail-item">
+                        <strong>Jenis Layanan</strong>
+                        <span>{{ $order->jenis_layanan ?? '-' }}</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>Estimasi Jumlah Laundry (kg/pcs)</strong>
+                        <span>{{ $order->estimasi_jumlah_laundry ?? '-' }}</span>
+                    </div>
+
+                    <div class="detail-item">
                         <strong>Pemilahan Pakaian</strong>
                         <span>{{ $order->is_sorted ? 'Ya' : 'Tidak' }}</span>
                     </div>

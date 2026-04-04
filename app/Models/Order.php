@@ -26,5 +26,7 @@ class Order extends Model
         'token',
         'dokumentasi_pakaian',
         "tanggal_penjemputan",
+        'jenis_layanan',
+        'estimasi_jumlah_laundry',
     ];
 }

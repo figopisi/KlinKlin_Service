@@ -84,8 +84,9 @@
                 <h3>Jemput & Antar Cucian</h3>
                 <p>Kami menjemput cucianmu di rumah dan mengantarkannya kembali setelah selesai dicuci. Kamu bebas memilih laundry favoritmu, sementara kami memastikan prosesnya cepat dan aman.</p>
                 <ul>
-                    <li>Area Denpasar Selatan & Barat: <strong>Rp 10.000</strong></li>
-                    <li>Area Denpasar Timur & Utara: <strong>Rp 15.000</strong></li>
+                    <li>Zona 1 Area Denpasar Selatan & Barat: <strong>Rp 10.000</strong></li>
+                    <li>Zona 2 Area Denpasar Timur & Utara: <strong>Rp 15.000</strong></li>
+                    <li>Zona 3 Area di luar Denpasar: <strong>Rp 20.000</strong></li>
                     <li>Fee tambahan berdasarkan jarak ke laundry:
                         <ul>
                             <li>1–5 km: Rp 10.000</li>

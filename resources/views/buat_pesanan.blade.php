@@ -44,17 +44,17 @@
                         <div class="copy-container">
                             <label>Salin format pesan ini:</label>
                             <textarea class="copy-box" readonly onclick="this.select()">
-                                Nama lengkap:
-                                Alamat customer:
-                                Nomor telepon yang aktif:
-                                Tanggal Penjemputan:
-                                Jam Penjemputan:
-                                Jenis Layanan:
-                                Estimasi Jumlah Laundry: (kg/pcs)
-                                Alamat laundry Pilihan: (Jika tidak ada alamat spesifik, kami yang akan menentukan laundry)
-                                Jasa pilah: Iya/Tidak
-                                Metode bayar: cash di tempat/transfer
-                                Catatan Khusus: </textarea>
+Nama lengkap:
+Alamat customer:
+Nomor telepon yang aktif:
+Tanggal Penjemputan:
+Jam Penjemputan:
+Jenis Layanan:
+Estimasi Jumlah Laundry: (kg/pcs)
+Alamat laundry Pilihan: (Jika tidak ada alamat spesifik, kami yang akan menentukan laundry)
+Jasa pilah: Iya/Tidak
+Metode bayar: cash di tempat/transfer
+Catatan Khusus: </textarea>
                             <small>*Klik dalam kotak untuk menyeleksi semua teks</small>
                         </div>
                     </li>

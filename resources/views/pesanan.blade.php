@@ -20,7 +20,7 @@
 
     <!-- Tombol Kembali -->
     <div class="back-btn-container">
-        <a href="{{ route('dashboard') }}" class="back-btn">← Kembali ke Dashboard</a>
+        <a href="{{ route('dashboard') }}" class="back-btn">← Kembali</a>
     </div>
 
     <h1>Cek Pesanan</h1>

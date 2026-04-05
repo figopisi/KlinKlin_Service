@@ -8,7 +8,7 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('asset/css/style.css') }}">
-
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 </head>
 
@@ -75,10 +75,11 @@
     <div class="business-info">
         <h2>Apa itu KlinKlin?</h2>
         <p>KlinKlin adalah layanan antar jemput laundry yang memudahkan hidupmu. Kamu tinggal pilih laundry favoritmu, kami yang menjemput cucian di rumah dan mengantarkan kembali setelah selesai. Dengan layanan ini, kamu tidak perlu repot membawa cucian sendiri. Praktis, aman, dan nyaman di area Denpasar.</p>
-        <br>
+        @include('carouselAbout')
         <h2>Layanan Kami</h2>
+        
         <div class="service-cards">
-
+            
             <!-- Service Card 1: Jemput & Antar Cucian -->
             <div class="service-card">
                 <h3>Jemput & Antar Cucian</h3>

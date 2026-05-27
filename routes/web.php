@@ -95,5 +95,8 @@ Route::middleware(['auth.driver'])->prefix('driver')->name('driver.')->group(fun
     Route::post('/update-status/{id}', [DriverController::class, 'updateStatus'])->name('updateStatus');
     Route::post('/lepas/{id}', [DriverController::class, 'lepasPesanan'])
     ->name('lepas');
+
+    Route::get('/pesanan/{id}', [DriverController::class, 'detail'])->name('pesanan.detail');
+    Route::post('/pesanan/{id}/update', [DriverController::class, 'updateByDriver'])->name('pesanan.update');
 });
 

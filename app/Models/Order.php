@@ -28,5 +28,18 @@ class Order extends Model
         "tanggal_penjemputan",
         'jenis_layanan',
         'estimasi_jumlah_laundry',
-    ];
+        'current_driver_id',
+];
+
+        // Relasi ke log driver
+    public function driverLogs()
+    {
+        return $this->hasMany(OrderDriverLog::class);
+    }
+
+    public function currentDriver()
+    {
+        return $this->belongsTo(Driver::class, 'current_driver_id');
+    }
+
 }

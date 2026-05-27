@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DriverController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,5 +74,26 @@ Route::prefix('admin')->middleware('auth.admin')->group(function () {
 
     Route::put('/orders/{id}', [OrderController::class, 'update'])
         ->name('admin.orders.update');
+     Route::post('/orders/{id}/nullify-driver',[OrderController::class, 'nullifyDriver'])
+        ->name('admin.orders.nullifyDriver');
 
 });
+
+// Driver Auth
+Route::get('/driver/login', [AuthController::class, 'showDriverLogin'])->name('driver.login');
+Route::post('/driver/login', [AuthController::class, 'driverLogin'])->name('driver.login.post');
+Route::post('/driver/logout', [AuthController::class, 'driverLogout'])->name('driver.logout');
+
+// Driver Dashboard (dilindungi middleware)
+Route::middleware(['auth.driver'])->prefix('driver')->name('driver.')->group(function () {
+    Route::get('/dashboard', [DriverController::class, 'dashboard'])->name('dashboard');
+});
+
+Route::middleware(['auth.driver'])->prefix('driver')->name('driver.')->group(function () {
+    Route::get('/dashboard', [DriverController::class, 'dashboard'])->name('dashboard');
+    Route::post('/ambil/{id}', [DriverController::class, 'ambilPesanan'])->name('ambil');
+    Route::post('/update-status/{id}', [DriverController::class, 'updateStatus'])->name('updateStatus');
+    Route::post('/lepas/{id}', [DriverController::class, 'lepasPesanan'])
+    ->name('lepas');
+});
+

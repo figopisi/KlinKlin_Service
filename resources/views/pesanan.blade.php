@@ -154,6 +154,300 @@
                 </div>
             </div>
 
+            @if($order->driverLogs->count())
+
+<style>
+
+.driver-section{
+    margin-top:24px;
+}
+
+.driver-section-title{
+    font-size:18px;
+    font-weight:800;
+    color:#111827;
+    margin-bottom:16px;
+}
+
+.driver-grid{
+    display:grid;
+    gap:16px;
+}
+
+.driver-card{
+    background:white;
+    border-radius:20px;
+    padding:22px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 10px 24px rgba(0,0,0,.05);
+    position:relative;
+    overflow:hidden;
+}
+
+.driver-card.active{
+    border:2px solid #22c55e;
+    background:linear-gradient(to bottom right,#f0fdf4,#ffffff);
+}
+
+.driver-card.old{
+    opacity:.92;
+}
+
+.driver-badge{
+    position:absolute;
+    top:16px;
+    right:16px;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:800;
+}
+
+.driver-badge.active{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.driver-badge.old{
+    background:#f1f5f9;
+    color:#475569;
+}
+
+.driver-header{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:18px;
+}
+
+.driver-avatar{
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    background:#2563eb;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    font-weight:800;
+    flex-shrink:0;
+}
+
+.driver-info h4{
+    margin:0;
+    font-size:18px;
+    font-weight:800;
+    color:#111827;
+}
+
+.driver-info p{
+    margin-top:4px;
+    color:#64748b;
+    font-size:14px;
+}
+
+.driver-detail-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:10px;
+}
+
+.driver-detail{
+    background:#f8fafc;
+    border-radius:14px;
+    padding:14px;
+}
+
+.driver-detail-label{
+    font-size:12px;
+    text-transform:uppercase;
+    font-weight:700;
+    color:#94a3b8;
+    margin-bottom:6px;
+}
+
+.driver-detail-value{
+    font-size:15px;
+    font-weight:700;
+    color:#0f172a;
+}
+
+.driver-status{
+    display:inline-block;
+    margin-top:8px;
+    padding:6px 12px;
+    border-radius:999px;
+    background:#dbeafe;
+    color:#1d4ed8;
+    font-size:13px;
+    font-weight:800;
+}
+
+@media(max-width:768px){
+
+    .driver-detail-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+
+<div class="driver-section">
+
+    <div class="driver-section-title">
+        Informasi Driver
+    </div>
+
+    <div class="driver-grid">
+
+        {{-- DRIVER AKTIF --}}
+        @if($order->currentDriver)
+
+        <div class="driver-card active">
+
+            <div class="driver-badge active">
+                DRIVER SAAT INI
+            </div>
+
+            <div class="driver-header">
+
+                <div class="driver-avatar">
+                    🚗
+                </div>
+
+                <div class="driver-info">
+
+                    <h4>
+                        {{ $order->currentDriver->name }}
+                    </h4>
+
+                    <p>
+                        Driver yang sedang menangani pesanan Anda
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="driver-detail-grid">
+
+                <div class="driver-detail">
+
+                    <div class="driver-detail-label">
+                        Nomor Telepon
+                    </div>
+
+                    <div class="driver-detail-value">
+                        {{ $order->currentDriver->phone ?? '-' }}
+                    </div>
+
+                </div>
+
+                <div class="driver-detail">
+
+                    <div class="driver-detail-label">
+                        Status Pesanan
+                    </div>
+
+                    <div class="driver-detail-value">
+                        <span class="driver-status">
+                            {{ $order->status }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        @endif
+
+        {{-- DRIVER SEBELUMNYA --}}
+        @foreach(
+            $order->driverLogs
+                ->where('driver_id', '!=', $order->current_driver_id)
+                ->sortByDesc('taken_at')
+                ->unique('driver_id')
+            as $log
+        )
+
+        <div class="driver-card old">
+
+            <div class="driver-badge old">
+                DRIVER SEBELUMNYA
+            </div>
+
+            <div class="driver-header">
+
+                <div class="driver-avatar">
+                    🚚
+                </div>
+
+                <div class="driver-info">
+
+                    <h4>
+                        {{ $log->driver->name ?? '-' }}
+                    </h4>
+
+                    <p>
+                        Pernah menangani pesanan ini
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="driver-detail-grid">
+
+                <div class="driver-detail">
+
+                    <div class="driver-detail-label">
+                        Nomor Telepon
+                    </div>
+
+                    <div class="driver-detail-value">
+                        {{ $log->driver->phone ?? '-' }}
+                    </div>
+
+                </div>
+
+                <div class="driver-detail">
+
+                    <div class="driver-detail-label">
+                        Status Terakhir
+                    </div>
+
+                    <div class="driver-detail-value">
+                        <span class="driver-status">
+                            {{ $log->status }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div style="margin-top:16px; color:#64748b; font-size:13px;">
+
+                Terakhir aktif:
+                {{ \Carbon\Carbon::parse($log->taken_at)->translatedFormat('d F Y - H:i') }}
+
+            </div>
+
+        </div>
+
+        @endforeach
+
+    </div>
+
+</div>
+
+@endif
+
             @endforeach
         @else
             <div class="not-found">

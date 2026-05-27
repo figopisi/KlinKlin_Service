@@ -15,13 +15,18 @@ class OrderController extends Controller
     }
 
     public function search(Request $request)
-    {
-        $token = $request->input('token');
+{
+    $token = $request->input('token');
 
-        $orders = Order::where('token', $token)->get();
+    $orders = Order::with([
+        'driverLogs.driver',
+        'currentDriver'
+    ])
+    ->where('token', $token)
+    ->get();
 
-        return view('pesanan', compact('orders', 'token'));
-    }
+    return view('pesanan', compact('orders', 'token'));
+}
 
  // ================= BUAT PESANAN =================
 public function store(Request $request)
@@ -73,7 +78,7 @@ public function store(Request $request)
         $totalPesanan = Order::count();
         $totalPemasukan = Order::where('status', 'Selesai')->sum('fee');
 
-        return view('adminindex', compact('totalPesanan', 'totalPemasukan'));
+        return view('admin.adminindex', compact('totalPesanan', 'totalPemasukan'));
     }
 
     public function adminOrders(Request $request)
@@ -100,47 +105,68 @@ public function store(Request $request)
 
         $orders = $query->get();
 
-        return view('adminOrders', compact('orders'));
+        return view('admin.adminOrders', compact('orders'));
     }
 
     public function adminDetail($id)
     {
+        $order = Order::with('driverLogs.driver')->findOrFail($id);
+        return view('admin.adminDetailOrder', compact('order'));
+    }
+
+    public function update(Request $request, $id)
+    {
         $order = Order::findOrFail($id);
-        return view('adminDetailOrder', compact('order'));
+
+        $data = $request->validate([
+            'nama' => 'required|string|max:100',
+            'phone' => 'required|string|max:20',
+            'alamat_customer' => 'required|string',
+            'alamat_laundry' => 'required|string',
+            'phone_laundry' => 'nullable|string|max:20',
+            'status' => 'required|in:Diproses,Dijemput,Dicuci,Diantar,Selesai',
+            'fee' => 'required|numeric',
+            'note' => 'nullable|string',
+            'dokumentasi_pakaian' => 'nullable|string',
+            'is_sorted' => 'nullable',
+            'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // ✅ tambahkan field baru
+            'jenis_layanan' => 'nullable|string',
+            'estimasi_jumlah_laundry' => 'nullable|string',
+        ]);
+
+        // Konversi select ke integer
+        $data['is_sorted'] = (int) $request->input('is_sorted', 0);
+
+        // 🔥 LOGIC: kalau tidak pakai pemilahan → hapus dokumentasi
+        if (!$data['is_sorted']) {
+            $data['dokumentasi_pakaian'] = null;
+        }
+
+        // Update database
+        $order->update($data);
+
+        return redirect()->route('admin.orders')
+            ->with('success', 'Pesanan berhasil diupdate');
     }
 
-public function update(Request $request, $id)
-{
-    $order = Order::findOrFail($id);
+    public function nullifyDriver($id)
+    {
+        $order = Order::findOrFail($id);
 
-    $data = $request->validate([
-        'nama' => 'required|string|max:100',
-        'phone' => 'required|string|max:20',
-        'alamat_customer' => 'required|string',
-        'alamat_laundry' => 'required|string',
-        'phone_laundry' => 'nullable|string|max:20',
-        'status' => 'required|in:Diproses,Dijemput,Dicuci,Diantar,Selesai',
-        'fee' => 'required|numeric',
-        'note' => 'nullable|string',
-        'dokumentasi_pakaian' => 'nullable|string',
-        'is_sorted' => 'nullable',
-        'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // ✅ tambahkan field baru
-        'jenis_layanan' => 'nullable|string',
-        'estimasi_jumlah_laundry' => 'nullable|string',
-    ]);
+        // rollback status
+        if ($order->status === 'Dijemput') {
+            $statusBaru = 'Diproses';
+        } elseif ($order->status === 'Diantar') {
+            $statusBaru = 'Dicuci';
+        } else {
+            $statusBaru = $order->status;
+        }
 
-    // Konversi select ke integer
-    $data['is_sorted'] = (int) $request->input('is_sorted', 0);
+        $order->update([
+            'status' => $statusBaru,
+            'current_driver_id' => null,
+        ]);
 
-    // 🔥 LOGIC: kalau tidak pakai pemilahan → hapus dokumentasi
-    if (!$data['is_sorted']) {
-        $data['dokumentasi_pakaian'] = null;
+        return back()->with('success', 'Driver berhasil dilepas dari pesanan');
     }
-
-    // Update database
-    $order->update($data);
-
-    return redirect()->route('admin.orders')
-        ->with('success', 'Pesanan berhasil diupdate');
-}
 }

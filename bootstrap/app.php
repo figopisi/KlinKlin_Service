@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Daftarkan alias middleware Anda di sini
         $middleware->alias([
             'auth.admin' => \App\Http\Middleware\AdminAuth::class,
+            'auth.driver' => \App\Http\Middleware\AuthDriver::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

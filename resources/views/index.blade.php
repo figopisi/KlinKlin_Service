@@ -8,7 +8,7 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('asset/css/style.css') }}">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
 
 </head>
 
@@ -20,53 +20,75 @@
 
 <div class="container">
 
-<!-- NAVBAR -->
-<div class="navbar">
-<a href="{{ route('landing') }}">Landing</a>
-<a href="#" class="active">Dashboard</a>
-<a href="{{ route('pesanan') }}"> Cari Riwayat Pesanan</a>
+<!-- NAVBAR WRAPPER -->
+<div class="navbar-wrapper">
+
+    <!-- HAMBURGER (mobile only) -->
+    <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <!-- NAVBAR -->
+    <div class="navbar" id="navMenu">
+        <a href="{{ route('landing') }}">Landing</a>
+        <a href="#" class="active">Dashboard</a>
+        <a href="{{ route('pesanan') }}">Cari Riwayat Pesanan</a>
+    </div>
+
 </div>
+
+<!-- SCRIPT -->
+<script>
+const hamburger = document.getElementById("hamburger");
+const navMenu = document.getElementById("navMenu");
+
+hamburger.addEventListener("click", () => {
+    navMenu.classList.toggle("active");
+});
+</script>
 
 <!-- HERO -->
 <section class="hero">
-<h1>Hello, Kliners</h1>
-<p>Kamu sudah siap <strong>mencuci lagi</strong> hari ini?</p>
+    <h1>Hello, Kliners</h1>
+    <p>Kamu sudah siap <strong>mencuci lagi</strong> hari ini?</p>
 </section>
 
 <!-- CARDS -->
 <section class="cards">
 
-<div class="card">
-<img src="Lottie/Lottie_I.gif">
-<div class="card-content">
-<h3>Cucian udah numpuk?</h3>
-<p>Jangan sampai cuciannya <strong>menggunung</strong> yaa</p>
-</div>
-</div>
+    <div class="card">
+        <img src="{{ asset('Lottie/Lottie_I.gif') }}" alt="Cucian">
+        <div class="card-content">
+            <h3>Cucian udah numpuk?</h3>
+            <p>Jangan sampai cuciannya <strong>menggunung</strong> yaa</p>
+        </div>
+    </div>
 
-<div class="card">
-<img src="Lottie/Lottie_II.gif">
-<div class="card-content">
-<h3>Mau cek status pesanan</h3>
-<p>Engga perlu khawatir, <strong>Cek disini</strong> aja!</p>
-<a href="{{ route('pesanan') }}" class="action"> PERIKSA →</a>
-</div>
-</div>
+    <div class="card">
+        <img src="{{ asset('Lottie/Lottie_II.gif') }}" alt="Cek Pesanan">
+        <div class="card-content">
+            <h3>Mau cek status pesanan</h3>
+            <p>Engga perlu khawatir, <strong>Cek disini</strong> aja!</p>
+            <a href="{{ route('pesanan') }}" class="action">PERIKSA →</a>
+        </div>
+    </div>
 
 </section>
 
 <!-- BIG CTA -->
 <section class="big-card">
 
-<div class="big-left">
-<img src="Lottie/Icon_I.png">
-<div class="big-text">
-<h3>Buat keranjang cucianmu sekarang!!</h3>
-<p>Sat-set, biarin KlinKlin yang urus cucianmu sampai wangi</p>
-</div>
-</div>
+    <div class="big-left">
+        <img src="{{ asset('Lottie/Icon_I.png') }}" alt="Icon">
+        <div class="big-text">
+            <h3>Buat keranjang cucianmu sekarang!!</h3>
+            <p>Sat-set, biarin KlinKlin yang urus cucianmu sampai wangi</p>
+        </div>
+    </div>
 
-<a href="{{ route('buat-pesanan') }}" class="action"> BUAT →</a>
+    <a href="{{ route('buat-pesanan') }}" class="action">BUAT →</a>
 
 </section>
 
@@ -75,11 +97,10 @@
     <div class="business-info">
         <h2>Apa itu KlinKlin?</h2>
         <p>KlinKlin adalah layanan antar jemput laundry yang memudahkan hidupmu. Kamu tinggal pilih laundry favoritmu, kami yang menjemput cucian di rumah dan mengantarkan kembali setelah selesai. Dengan layanan ini, kamu tidak perlu repot membawa cucian sendiri. Praktis, aman, dan nyaman di area Denpasar.</p>
-        @include('carouselAbout')
+        <br>
         <h2>Layanan Kami</h2>
-        
         <div class="service-cards">
-            
+
             <!-- Service Card 1: Jemput & Antar Cucian -->
             <div class="service-card">
                 <h3>Jemput & Antar Cucian</h3>
@@ -88,12 +109,6 @@
                     <li>Zona 1 Area Denpasar Selatan & Barat: <strong>Rp 10.000</strong></li>
                     <li>Zona 2 Area Denpasar Timur & Utara: <strong>Rp 15.000</strong></li>
                     <li>Zona 3 Area di luar Denpasar: <strong>Rp 20.000</strong></li>
-                    <li>Fee tambahan berdasarkan jarak ke laundry:
-                        <ul>
-                            <li>1–5 km: Rp 10.000</li>
-                            <li>5–10 km: Rp 20.000</li>
-                        </ul>
-                    </li>
                 </ul>
             </div>
 

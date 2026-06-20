@@ -1,14 +1,14 @@
 /* ================= FOOTER ================= */
-.site-footer {
+.kk-footer {
     width: 100%;
-    background:linear-gradient(90deg,#05558E,#5A8196);
+    background: linear-gradient(90deg, #05558E, #5A8196);
     color: #fff;
     padding: 40px 20px 20px 20px;
     box-sizing: border-box;
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-.footer-container {
+.kk-footer-container {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
@@ -17,28 +17,28 @@
     gap: 20px;
 }
 
-.footer-left h3 {
+.kk-footer-left h3 {
     font-size: 24px;
     margin-bottom: 10px;
 }
 
-.footer-left p {
+.kk-footer-left p {
     font-size: 16px;
     line-height: 1.5;
 }
 
-.footer-right h4 {
+.kk-footer-right h4 {
     font-size: 18px;
     margin-bottom: 10px;
 }
 
-.footer-contacts {
+.kk-footer-contacts {
     display: flex;
     gap: 15px;
     flex-wrap: wrap;
 }
 
-.contact-card {
+.kk-footer-contact-card {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -48,17 +48,17 @@
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.contact-card img {
+.kk-footer-contact-card img {
     width: 32px;
     height: 32px;
 }
 
-.contact-card:hover {
+.kk-footer-contact-card:hover {
     transform: translateY(-3px);
     opacity: 0.9;
 }
 
-.footer-bottom {
+.kk-footer-bottom {
     text-align: center;
     margin-top: 30px;
     font-size: 14px;
@@ -67,25 +67,8 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .footer-container {
+    .kk-footer-container {
         flex-direction: column;
         gap: 20px;
     }
-}
-
-/* ================= STICKY FOOTER FIX ================= */
-html, body {
-    height: 100%;
-    margin: 0;
-}
-
-body {
-    display: flex;
-    flex-direction: column;
-}
-
-.container {
-    flex: 1; /* konten utama fleksibel, footer di bawah */
-    display: flex;
-    flex-direction: column;
 }

@@ -5,9 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderDriverLog;
+use App\Models\OrderPhoto;
+use App\Services\CloudinaryService;
 
 class DriverController extends Controller
 {
+    public function __construct(
+        protected CloudinaryService $cloudinary
+    ) {}
+
     public function dashboard()
     {
         $tersedia = Order::with('driverLogs.driver')
@@ -41,8 +47,8 @@ class DriverController extends Controller
 
    public function detail($id)
 {
-    $order = Order::with(['driverLogs.driver', 'currentDriver'])
-        ->findOrFail($id); // ambil dulu tanpa filter driver
+    $order = Order::with(['driverLogs.driver', 'currentDriver', 'photos'])
+    ->findOrFail($id); // ambil dulu tanpa filter driver
 
     $driverId = session('driver_id');
 
@@ -58,7 +64,7 @@ class DriverController extends Controller
     }
 
     // Boleh edit hanya jika pemilik aktif DAN status Dijemput
-    $bisaEdit = $isPemilik && $order->status === 'Dijemput';
+    $bisaEdit = $isPemilik && in_array($order->status, ['Dijemput', 'Mencari Laundry']);
 
     return view('driver.detailPesanan', compact('order', 'bisaEdit'));
 }
@@ -82,7 +88,7 @@ class DriverController extends Controller
         }
 
         // Guard 2: status harus Dijemput
-        if ($order->status !== 'Dijemput') {
+        if ($order->status !== 'Dijemput' && $order->status !== 'Mencari_Laundry') {
             return redirect()->route('driver.pesanan.detail', $id)
                 ->with('error', 'Detail hanya bisa diubah saat status pesanan Dijemput.');
         }
@@ -91,6 +97,7 @@ class DriverController extends Controller
             'alamat_laundry'          => 'required|string',
             'phone_laundry'           => 'nullable|string|max:20',
             'estimasi_jumlah_laundry' => 'nullable|string|max:100',
+            'dokumentasi_pakaian'     => 'nullable|string',
         ]);
 
         $order->update($data);
@@ -142,7 +149,91 @@ class DriverController extends Controller
 
     // ================= UPDATE STATUS =================
 
-    public function updateStatus($id)
+public function updateStatus($id)
+{
+    $order = Order::findOrFail($id);
+
+    if ($order->current_driver_id != session('driver_id')) {
+        return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
+    }
+
+    // Cek syarat foto sebelum boleh pindah status
+    if ($order->status === 'Dijemput') {
+        $punya = $order->photos()->where('type', 'pengambilan')->exists();
+        if (!$punya) {
+            return back()->with('error', 'Upload bukti pengambilan baju terlebih dahulu');
+        }
+    }
+
+    if ($order->status === 'Mencari Laundry') {
+        $punya = $order->photos()->where('type', 'nota')->exists();
+        if (!$punya) {
+            return back()->with('error', 'Upload bukti nota laundry terlebih dahulu');
+        }
+    }
+
+    if ($order->status === 'Diantar') {
+        $punya = $order->photos()->where('type', 'pengiriman')->exists();
+        if (!$punya) {
+            return back()->with('error', 'Upload bukti pengiriman terlebih dahulu');
+        }
+    }
+
+    $transisi = [
+        'Diproses'        => 'Dijemput',
+        'Dijemput'        => 'Mencari Laundry',
+        'Mencari Laundry' => 'Dicuci',
+        'Dicuci'          => 'Diantar',
+        'Diantar'         => 'Selesai',
+    ];
+
+    $statusBaru = $transisi[$order->status] ?? null;
+
+    if (!$statusBaru) {
+        return back()->with('error', 'Status tidak bisa diubah');
+    }
+
+    OrderDriverLog::create([
+        'order_id'  => $order->id,
+        'driver_id' => session('driver_id'),
+        'status'    => $statusBaru,
+        'taken_at'  => now(),
+    ]);
+
+    $order->update(['status' => $statusBaru]);
+
+    return back()->with('success', 'Status berhasil diupdate!');
+}
+
+   // ================= LEPAS PESANAN =================
+
+public function lepasPesanan($id)
+{
+    $order = Order::findOrFail($id);
+
+    if ($order->current_driver_id != session('driver_id')) {
+        return back()->with('error', 'Bukan pesanan kamu');
+    }
+
+    $rollback = [
+        'Dijemput'        => 'Diproses',
+        'Mencari Laundry' => 'Diproses',
+        'Diantar'         => 'Dicuci',
+    ];
+
+    $statusBaru = $rollback[$order->status] ?? $order->status;
+
+    $order->update([
+        'status'            => $statusBaru,
+        'current_driver_id' => null,
+    ]);
+
+    return back()->with('success', 'Pesanan berhasil dilepas');
+}
+
+        // ================= UPLOAD FOTO =================
+
+    public function uploadBuktiPengambilan(Request $request, $id)
     {
         $order = Order::findOrFail($id);
 
@@ -150,54 +241,95 @@ class DriverController extends Controller
             return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
         }
 
-        $transisi = [
-            'Diproses' => 'Dijemput',
-            'Dijemput' => 'Dicuci',
-            'Dicuci'   => 'Diantar',
-            'Diantar'  => 'Selesai',
-        ];
-
-        $statusBaru = $transisi[$order->status] ?? null;
-
-        if (!$statusBaru) {
-            return back()->with('error', 'Status tidak bisa diubah');
+        if ($order->status !== 'Dijemput') {
+            return back()->with('error', 'Upload bukti pengambilan hanya bisa dilakukan saat status Dijemput');
         }
 
-        OrderDriverLog::create([
-            'order_id'  => $order->id,
-            'driver_id' => session('driver_id'),
-            'status'    => $statusBaru,
-            'taken_at'  => now(),
+        $request->validate([
+            'foto' => 'required|image|max:5120',
         ]);
 
-        $order->update(['status' => $statusBaru]);
+        $result = $this->cloudinary->uploadBuktiPengambilan($request->file('foto'), $order->token);
 
-        return back()->with('success', 'Status berhasil diupdate!');
+        OrderPhoto::create([
+            'order_id'  => $order->id,
+            'type'      => 'pengambilan',
+            'url'       => $result['url'],
+            'public_id' => $result['public_id'],
+        ]);
+
+        return back()->with('success', 'Bukti pengambilan berhasil diupload');
     }
 
-    // ================= LEPAS PESANAN =================
-
-    public function lepasPesanan($id)
+    public function uploadBuktiNota(Request $request, $id)
     {
         $order = Order::findOrFail($id);
 
         if ($order->current_driver_id != session('driver_id')) {
-            return back()->with('error', 'Bukan pesanan kamu');
+            return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
         }
 
-        if ($order->status == 'Dijemput') {
-            $statusBaru = 'Diproses';
-        } elseif ($order->status == 'Diantar') {
-            $statusBaru = 'Dicuci';
-        } else {
-            $statusBaru = $order->status;
+        if ($order->status !== 'Mencari Laundry') {
+            return back()->with('error', 'Upload bukti nota hanya bisa dilakukan saat status Mencari Laundry');
         }
 
-        $order->update([
-            'status'            => $statusBaru,
-            'current_driver_id' => null,
+        $request->validate([
+            'foto' => 'required|image|max:5120',
         ]);
 
-        return back()->with('success', 'Pesanan berhasil dilepas');
+        $result = $this->cloudinary->uploadBuktiNota($request->file('foto'), $order->token);
+
+        OrderPhoto::create([
+            'order_id'  => $order->id,
+            'type'      => 'nota',
+            'url'       => $result['url'],
+            'public_id' => $result['public_id'],
+        ]);
+
+        return back()->with('success', 'Bukti nota berhasil diupload');
     }
-}
+
+    public function uploadBuktiPengiriman(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        if ($order->current_driver_id != session('driver_id')) {
+            return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
+        }
+
+        if ($order->status !== 'Diantar') {
+            return back()->with('error', 'Upload bukti pengiriman hanya bisa dilakukan saat status Diantar');
+        }
+
+        $request->validate([
+            'foto' => 'required|image|max:5120',
+        ]);
+
+        $result = $this->cloudinary->uploadBuktiPengiriman($request->file('foto'), $order->token);
+
+        OrderPhoto::create([
+            'order_id'  => $order->id,
+            'type'      => 'pengiriman',
+            'url'       => $result['url'],
+            'public_id' => $result['public_id'],
+        ]);
+
+        return back()->with('success', 'Bukti pengiriman berhasil diupload');
+    }
+
+    public function deleteFoto($photoId)
+    {
+        $photo = OrderPhoto::findOrFail($photoId);
+        $order = Order::findOrFail($photo->order_id);
+
+        if ($order->current_driver_id != session('driver_id')) {
+            return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
+        }
+
+        $this->cloudinary->delete($photo->public_id);
+        $photo->delete();
+
+        return back()->with('success', 'Foto berhasil dihapus');
+    }
+    }
+

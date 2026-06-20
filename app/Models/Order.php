@@ -42,4 +42,24 @@ class Order extends Model
         return $this->belongsTo(Driver::class, 'current_driver_id');
     }
 
+        public function photos()
+    {
+        return $this->hasMany(OrderPhoto::class);
+    }
+
+    public function fotoPengambilan()
+    {
+        return $this->hasOne(OrderPhoto::class)->where('type', 'pengambilan');
+    }
+
+    public function fotoPengiriman()
+    {
+        return $this->hasOne(OrderPhoto::class)->where('type', 'pengiriman');
+    }
+
+    public function fotoNota()
+    {
+        return $this->hasOne(OrderPhoto::class)->where('type', 'nota');
+    }
+
 }

@@ -76,6 +76,7 @@
         }
         .status-Diproses { background: #dbeafe; color: #1d4ed8; }
         .status-Dijemput { background: #fef9c3; color: #a16207; }
+        .status-Mencari-Laundry { background: #ffedd5; color: #c2410c; }
         .status-Dicuci   { background: #ede9fe; color: #6d28d9; }
         .status-Diantar  { background: #dcfce7; color: #15803d; }
         .status-Selesai  { background: #f1f5f9; color: #475569; }
@@ -181,21 +182,6 @@
     </div>
 </div>
 
-{{-- ========================= --}}
-{{-- MODAL: LEPAS PESANAN      --}}
-{{-- ========================= --}}
-<div class="modal-overlay" id="modalLepas">
-    <div class="modal-box">
-        <div class="modal-icon">⚠️</div>
-        <div class="modal-title">Lepaskan Pesanan?</div>
-        <div class="modal-desc" id="modalLepasDesc"></div>
-        <div class="modal-actions">
-            <button class="modal-cancel" onclick="tutupModal('modalLepas')">✖ Tidak</button>
-            <button class="modal-confirm-lepas" onclick="submitForm('modalLepas')">✔ Ya, Lepaskan</button>
-        </div>
-    </div>
-</div>
-
 {{-- NAVBAR --}}
 <nav class="navbar">
     <div class="brand">🚗 Driver Panel</div>
@@ -235,19 +221,19 @@
                 <div class="info-row">📍 Alamat: <span>{{ $order->alamat_customer }}</span></div>
                 <div class="info-row">📞 Telp: <span>{{ $order->phone }}</span></div>
                 <div class="info-row">🧺 Layanan: <span>{{ $order->jenis_layanan }}</span></div>
-                <div><span class="status-badge status-{{ $order->status }}">{{ $order->status }}</span></div>
+                <div><span class="status-badge status-{{ str_replace(' ', '-', $order->status) }}">{{ $order->status }}</span></div>
 
                 @php
                     $labelBtn = match($order->status) {
-                        'Diproses' => '🚗 Jemput Cucian Customer',
-                        'Dijemput' => '✅ Sudah di Laundry',
-                        'Dicuci'   => '🚚 Antar ke Customer',
-                        'Diantar'  => '✅ Selesai Diantar',
-                        default    => null,
+                        'Diproses'        => '🚗 Jemput Cucian Customer',
+                        'Dijemput'        => '🔍 Sudah Dijemput',
+                        'Mencari Laundry' => '🧺 Sudah di Laundry',
+                        'Dicuci'          => '🚚 Antar ke Customer',
+                        'Diantar'         => '✅ Selesai Diantar',
+                        default           => null,
                     };
                 @endphp
 
-                {{-- Form update — hidden, dipanggil modal --}}
                 @if($labelBtn)
                 <form id="formUpdate{{ $order->id }}"
                       action="{{ route('driver.updateStatus', $order->id) }}"
@@ -259,26 +245,10 @@
                             'formUpdate{{ $order->id }}',
                             '{{ $order->token }}',
                             '{{ addslashes($order->nama) }}',
-                            '{{ addslashes($labelBtn) }}'
+                            '{{ addslashes($labelBtn) }}',
+                            '{{ $order->status }}'
                         )">
                     {{ $labelBtn }}
-                </button>
-                @endif
-
-                {{-- Form lepas — hidden, dipanggil modal --}}
-                @if($order->status !== 'Selesai')
-                <form id="formLepas{{ $order->id }}"
-                      action="{{ route('driver.lepas', $order->id) }}"
-                      method="POST" style="display:none;">
-                    @csrf
-                </form>
-                <button type="button" class="btn btn-lepas"
-                        onclick="bukaModalLepas(
-                            'formLepas{{ $order->id }}',
-                            '{{ $order->token }}',
-                            '{{ addslashes($order->nama) }}'
-                        )">
-                    ❌ Lepaskan Pesanan
                 </button>
                 @endif
 
@@ -312,7 +282,7 @@
                 <div class="info-row">📞 Telp: <span>{{ $order->phone }}</span></div>
                 <div class="info-row">🧺 Layanan: <span>{{ $order->jenis_layanan }}</span></div>
                 <div class="info-row">📦 Estimasi: <span>{{ $order->estimasi_jumlah_laundry }}</span></div>
-                <div><span class="status-badge status-{{ $order->status }}">{{ $order->status }}</span></div>
+                <div><span class="status-badge status-{{ str_replace(' ', '-', $order->status) }}">{{ $order->status }}</span></div>
 
                 <form action="{{ route('driver.ambil', $order->id) }}" method="POST">
                     @csrf
@@ -366,22 +336,22 @@
 <script>
     let targetFormId = null;
 
-    function bukaModalUpdate(formId, token, nama, aksi) {
-        targetFormId = formId;
-        document.getElementById('modalUpdateDesc').innerHTML =
-            `Pesanan <strong>${token}</strong> atas nama <strong>${nama}</strong>.<br><br>` +
-            `Aksi: <strong>${aksi}</strong>`;
-        document.getElementById('modalUpdate').classList.add('active');
-    }
+    function bukaModalUpdate(formId, token, nama, aksi, status) {
+    targetFormId = formId;
 
-    function bukaModalLepas(formId, token, nama) {
-        targetFormId = formId;
-        document.getElementById('modalLepasDesc').innerHTML =
-            `Pesanan <strong>${token}</strong> atas nama <strong>${nama}</strong> ` +
-            `akan dikembalikan ke daftar tersedia dan bisa diambil driver lain.<br><br>` +
-            `Yakin ingin melepaskan?`;
-        document.getElementById('modalLepas').classList.add('active');
-    }
+    const syarat = {
+        'Dijemput':        `⚠️ Pastikan sudah upload <strong>bukti pengambilan</strong> pesanan <strong>${token}</strong> di detail pesanan.`,
+        'Mencari Laundry': `⚠️ Pastikan sudah upload <strong>bukti nota</strong> pesanan <strong>${token}</strong> di detail pesanan.`,
+        'Diantar':         `⚠️ Pastikan sudah upload <strong>bukti pengiriman</strong> pesanan <strong>${token}</strong> di detail pesanan.`,
+    };
+
+    const pesanSyarat = syarat[status] ? `<br><br>${syarat[status]}` : '';
+
+    document.getElementById('modalUpdateDesc').innerHTML =
+        `Pesanan <strong>${token}</strong> atas nama <strong>${nama}</strong>.<br><br>` +
+        `Aksi: <strong>${aksi}</strong>${pesanSyarat}`;
+    document.getElementById('modalUpdate').classList.add('active');
+}
 
     function tutupModal(modalId) {
         document.getElementById(modalId).classList.remove('active');
@@ -395,7 +365,6 @@
         tutupModal(modalId);
     }
 
-    // Klik area gelap di luar modal = tutup
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', function(e) {
             if (e.target === this) {

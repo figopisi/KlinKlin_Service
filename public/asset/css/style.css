@@ -339,7 +339,7 @@ body {
 .status-diproses { background: #1D4ED8; }
 .status-selesai { background: #16A34A; }
 
-.detail-item strong { display: block; font-size: 13px; opacity: 0.6; margin-bottom: 4px; text-transform: uppercase; }
+.detail-item strong { display: block; font-size: 13px;  margin-bottom: 4px; text-transform: uppercase; }
 .detail-item span { font-size: 17px; font-weight: 600; }
 
 /* ================= RESPONSIVE FIXES ================= */

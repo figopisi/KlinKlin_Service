@@ -12,6 +12,10 @@ use App\Http\Controllers\DriverController;
 */
 
 Route::get('/', function () {
+    return view('index');
+})->name('index');
+
+Route::get('/landing', function () {
     return view('landingpage');
 })->name('landing');
 
@@ -100,3 +104,13 @@ Route::middleware(['auth.driver'])->prefix('driver')->name('driver.')->group(fun
     Route::post('/pesanan/{id}/update', [DriverController::class, 'updateByDriver'])->name('pesanan.update');
 });
 
+// routes/web.php
+Route::post('/driver/pesanan/{id}/foto/pengambilan', [DriverController::class, 'uploadBuktiPengambilan'])->name('driver.foto.pengambilan');
+Route::post('/driver/pesanan/{id}/foto/nota', [DriverController::class, 'uploadBuktiNota'])->name('driver.foto.nota');
+Route::post('/driver/pesanan/{id}/foto/pengiriman', [DriverController::class, 'uploadBuktiPengiriman'])->name('driver.foto.pengiriman');
+Route::delete('/driver/foto/{photoId}', [DriverController::class, 'deleteFoto'])->name('driver.foto.delete');
+
+Route::post('/admin/pesanan/{id}/foto/pengambilan', [DriverController::class, 'uploadBuktiPengambilan'])->name('admin.foto.pengambilan');
+Route::post('/admin/pesanan/{id}/foto/nota', [DriverController::class, 'uploadBuktiNota'])->name('admin.foto.nota');
+Route::post('/admin/pesanan/{id}/foto/pengiriman', [DriverController::class, 'uploadBuktiPengiriman'])->name('admin.foto.pengiriman');
+Route::delete('/admin/foto/{photoId}', [DriverController::class, 'deleteFoto'])->name('admin.foto.delete');

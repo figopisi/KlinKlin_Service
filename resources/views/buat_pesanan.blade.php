@@ -48,6 +48,10 @@ ol.sub-steps li {
 .contact-cards {
     margin-bottom: 1rem;
 }
+
+.dot.searching {
+    background-color: #c2410c;
+}
 </style>
 </head>
 <body>
@@ -121,10 +125,15 @@ Catatan Khusus: </textarea>
                     <span class="dot pickup"></span>
                     <p><strong>Dijemput:</strong> Driver kami sedang dalam perjalanan menuju lokasimu untuk mengambil pakaian.</p>
                 </div>
+
+                <div class="status-item">
+                    <span class="dot searching"></span>
+                    <p><strong>Mencari Laundry:</strong> Pakaianmu sedang dalam proses pencarian outlet laundry terbaik untuk ditangani atau menuju alamat laundry pilihanmu.</p>
+                </div>
                 
                 <div class="status-item">
                     <span class="dot washing"></span>
-                    <p><strong>Dicuci:</strong> Pakaianmu sudah sampai di outlet dan sedang ditangani oleh tim profesional kami.</p>
+                    <p><strong>Dicuci:</strong> Pakaianmu sudah sampai di outlet dan sedang ditangani oleh pihak laundry.</p>
                 </div>
 
                 <div class="status-item">

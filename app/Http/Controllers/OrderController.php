@@ -40,7 +40,7 @@ public function store(Request $request)
         'fee' => 'required|integer|min:0',
         'is_sorted' => 'nullable|boolean',
         'note' => 'nullable|string',
-        'status' => 'nullable|in:Diproses,Dijemput,Dicuci,Diantar,Selesai',
+        'status' => 'nullable|in:Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
         'dokumentasi_pakaian' => 'nullable|url|max:500',
         'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // input admin: YYYY-MM-DD HH:MM
         'jenis_layanan' => 'nullable|string',
@@ -114,59 +114,52 @@ public function store(Request $request)
         return view('admin.adminDetailOrder', compact('order'));
     }
 
-    public function update(Request $request, $id)
+        public function update(Request $request, $id)
     {
         $order = Order::findOrFail($id);
 
         $data = $request->validate([
-            'nama' => 'required|string|max:100',
-            'phone' => 'required|string|max:20',
-            'alamat_customer' => 'required|string',
-            'alamat_laundry' => 'required|string',
-            'phone_laundry' => 'nullable|string|max:20',
-            'status' => 'required|in:Diproses,Dijemput,Dicuci,Diantar,Selesai',
-            'fee' => 'required|numeric',
-            'note' => 'nullable|string',
-            'dokumentasi_pakaian' => 'nullable|string',
-            'is_sorted' => 'nullable',
-            'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // ✅ tambahkan field baru
-            'jenis_layanan' => 'nullable|string',
+            'nama'                    => 'required|string|max:100',
+            'phone'                   => 'required|string|max:20',
+            'alamat_customer'         => 'required|string',
+            'alamat_laundry'          => 'required|string',
+            'phone_laundry'           => 'nullable|string|max:20',
+            'status'                  => 'required|in:Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
+            'fee'                     => 'required|numeric',
+            'note'                    => 'nullable|string',
+            'dokumentasi_pakaian'     => 'nullable|string',
+            'is_sorted'               => 'nullable',
+            'tanggal_penjemputan'     => 'nullable|date_format:Y-m-d H:i',
+            'jenis_layanan'           => 'nullable|string',
             'estimasi_jumlah_laundry' => 'nullable|string',
         ]);
 
-        // Konversi select ke integer
         $data['is_sorted'] = (int) $request->input('is_sorted', 0);
 
-        // 🔥 LOGIC: kalau tidak pakai pemilahan → hapus dokumentasi
-        if (!$data['is_sorted']) {
-            $data['dokumentasi_pakaian'] = null;
-        }
-
-        // Update database
         $order->update($data);
 
-        return redirect()->route('admin.orders')
+        return redirect()->route('admin.orders.detail', $order->id)
             ->with('success', 'Pesanan berhasil diupdate');
     }
 
     public function nullifyDriver($id)
-    {
-        $order = Order::findOrFail($id);
+{
+    $order = Order::findOrFail($id);
 
-        // rollback status
-        if ($order->status === 'Dijemput') {
-            $statusBaru = 'Diproses';
-        } elseif ($order->status === 'Diantar') {
-            $statusBaru = 'Dicuci';
-        } else {
-            $statusBaru = $order->status;
-        }
-
-        $order->update([
-            'status' => $statusBaru,
-            'current_driver_id' => null,
-        ]);
-
-        return back()->with('success', 'Driver berhasil dilepas dari pesanan');
+    // rollback status
+    if (in_array($order->status, ['Dijemput', 'Mencari Laundry'])) {
+        $statusBaru = 'Diproses';
+    } elseif ($order->status === 'Diantar') {
+        $statusBaru = 'Dicuci';
+    } else {
+        $statusBaru = $order->status;
     }
+
+    $order->update([
+        'status' => $statusBaru,
+        'current_driver_id' => null,
+    ]);
+
+    return back()->with('success', 'Driver berhasil dilepas dari pesanan');
+}
 }

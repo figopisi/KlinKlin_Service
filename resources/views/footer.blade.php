@@ -8,32 +8,30 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('asset/css/footer.css') }}">
-
 </head>
 
 <!-- ================= FOOTER ================= -->
-<footer class="site-footer">
-    <div class="footer-container">
-        <div class="footer-left">
+<footer class="kk-footer">
+    <div class="kk-footer-container">
+        <div class="kk-footer-left">
             <h3>KlinKlin</h3>
             <p>Layanan antar jemput laundry profesional di Denpasar.</p>
         </div>
-        <div class="footer-right">
+        <div class="kk-footer-right">
             <h4>Kontak Kami</h4>
-            <div class="footer-contacts">
-                <a href="https://wa.me/6282236405141" target="_blank" class="contact-card wa-card">
-                    <img src="Lottie/wa.gif" alt="WhatsApp">
+            <div class="kk-footer-contacts">
+                <a href="https://wa.me/6282236405141" target="_blank" class="kk-footer-contact-card">
+                    <img src="{{ asset('Lottie/wa.gif') }}" alt="WhatsApp">
                     <span>WhatsApp</span>
                 </a>
-                <a href="https://www.instagram.com/klinklin.service" target="_blank" class="contact-card ig-card">
-                    <img src="Lottie/ig.gif" alt="Instagram">
+                <a href="https://www.instagram.com/klinklin.service" target="_blank" class="kk-footer-contact-card">
+                    <img src="{{ asset('Lottie/ig.gif') }}" alt="Instagram">
                     <span>Instagram</span>
                 </a>
             </div>
         </div>
     </div>
-    <div class="footer-bottom">
+    <div class="kk-footer-bottom">
         &copy; 2025 - {{ date('Y') }} KlinKlin. All Rights Reserved.
     </div>
 </footer>
-

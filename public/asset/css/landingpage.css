@@ -1192,3 +1192,30 @@ a.cta { transition: opacity .6s var(--ease), transform .3s var(--ease), box-shad
     .order-preview-text { font-size: 13px; padding: 18px 18px; }
     .order-btn { font-size: 15px; padding: 14px 18px; }
 }
+
+.lang-switch-mobile {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .lang-switch-mobile {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 10px 0;
+        color: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .lang-switch-mobile .lang-label {
+        color: #ffffff;
+    }
+}

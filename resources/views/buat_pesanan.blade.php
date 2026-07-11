@@ -3,151 +3,160 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Buat Pesanan</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ asset('asset/css/buat_pesanan.css') }}">
-<link rel="stylesheet" href="{{ asset('asset/css/style.css') }}">
-<style>
-/* Spacing tambahan supaya teks tidak mepet */
-.step-card {
-    padding: 20px;
-    margin-bottom: 25px;
-}
+<title>Pesan Sekarang — KlinKlin</title>
 
-.step-card h3 {
-    margin-bottom: 15px;
-}
-
-.step-card p, .step-card ol, .step-card label {
-    margin-bottom: 1rem;
-    line-height: 1.7;
-}
-
-ol.sub-steps {
-    margin-left: 1.8rem;
-    margin-top: 0.5rem;
-}
-
-ol.sub-steps li {
-    margin-bottom: 1rem;
-}
-
-.copy-container {
-    margin-top: 0.8rem;
-    margin-bottom: 1.5rem;
-}
-
-.copy-box {
-    width: 100%;
-    min-height: 240px;
-    padding: 12px;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    resize: none;
-}
-.contact-cards {
-    margin-bottom: 1rem;
-}
-
-.dot.searching {
-    background-color: #c2410c;
-}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="asset/css/landingpage.css">
 </head>
+
 <body>
-<div class="circle-main"></div>
-<div class="circle-shadow"></div>
 
-<div class="container">
-    <div class="back-btn-container">
-        <a href="{{ route('dashboard') }}" class="back-btn">← Kembali ke Dashboard</a>
-    </div>
+@include('navbar')
 
-    <h1>Mulai Buat Pesanan Kamu!</h1>
+<!-- ===== ORDER / PESAN ===== -->
+<section id="pesan" class="order order-page">
+    <h2 class="order-title reveal" data-reveal="up" data-i18n-html="order_title"><strong>Ayo!</strong> laundry cucianmu <b>sekarang</b></h2>
 
-    <div class="step-container">
-        <!-- Langkah 1: Hubungi Admin & Panduan -->
-        <div class="step-card">
-            <h3>Langkah 1: Hubungi Admin & Ikuti Panduan</h3>
-            <ol class="sub-steps">
-                <li>
-                    Pilih media untuk menghubungi admin:
-                    <div class="contact-cards" style="margin-top:0.5rem;">
-                        <a href="https://wa.me/6282236405141?text=Nama%20lengkap:%0AAlamat%20customer:%0ANomor%20telepon%20yang%20aktif:%0ATanggal%20Penjemputan:%0AJam%20Penjemputan:%0AJenis%20Layanan:%0AEstimasi%20Jumlah%20Laundry:%20(kg/pcs)%0AAlamat%20laundry%20Pilihan:%20(Jika%20tidak%20ada%20alamat%20spesifik,%20kami%20yang%20akan%20menentukan%20laundry)%0AJasa%20pilah:%20Iya/Tidak%0AMetode%20bayar:%20cash%20di%20tempat/transfer%0ACatatan%20Khusus:" target="_blank" class="contact-card wa-card">
-                            <img src="Lottie/wa.gif" alt="WhatsApp">
-                            <span>WhatsApp</span>
-                        </a>
-                        <a href="https://www.instagram.com/klinklin.service" target="_blank" class="contact-card ig-card">
-                            <img src="Lottie/ig.gif" alt="Instagram">
-                            <span>Instagram</span>
-                        </a>
+    <div class="order-card reveal" data-reveal="up" style="--delay:.08s">
+        <span class="order-glow" aria-hidden="true"></span>
+
+        <div class="order-grid">
+            <!-- KIRI: kontak + form -->
+            <div class="order-main">
+                <h3 class="order-card-title" data-i18n-html="order_hubungi">Hubungi <strong>KlinKlin</strong></h3>
+
+                <div class="order-channels">
+                    <a href="https://wa.me/" target="_blank" rel="noopener" class="order-channel">
+                        <span class="order-channel-ic"><img src="image/wa.png" alt="WhatsApp"></span>
+                        <span data-i18n="order_wa">Whatsapp</span>
+                    </a>
+                    <a href="https://instagram.com/klinklin.service" target="_blank" rel="noopener" class="order-channel is-ig">
+                        <span class="order-channel-ic"><img src="image/ig.png" alt="Instagram"></span>
+                        <span data-i18n="order_ig">Instagram</span>
+                    </a>
+                </div>
+
+                <h3 class="order-card-sub" data-i18n-html="order_isi">Isi <strong>Format Pesanan</strong></h3>
+
+                <form id="orderForm" class="order-form" autocomplete="off">
+                    <div class="of-row">
+                        <div class="of-field">
+                            <label for="f_nama" data-i18n="form_nama_label">Nama lengkap</label>
+                            <input id="f_nama" type="text" placeholder="Nama kamu" data-i18n-placeholder="form_nama_ph">
+                        </div>
+                        <div class="of-field">
+                            <label for="f_telepon" data-i18n="form_telepon_label">Nomor telepon aktif</label>
+                            <input id="f_telepon" type="tel" placeholder="08xxxxxxxxxx" data-i18n-placeholder="form_telepon_ph">
+                        </div>
                     </div>
-                </li>
-                <li>
-                    Jika menggunakan Instagram, salin format pesan berikut untuk dikirim melalui DM:
-                    <div class="copy-container">
-                        <label>Salin format pesan:</label>
-                        <textarea class="copy-box" readonly onclick="this.select()">
-Nama lengkap:
-Alamat customer:
-Nomor telepon yang aktif:
-Tanggal Penjemputan:
-Jam Penjemputan:
-Jenis Layanan:
-Estimasi Jumlah Laundry: (kg/pcs)
-Alamat laundry Pilihan: (Jika tidak ada alamat spesifik, kami yang akan menentukan laundry)
-Jasa pilah: Iya/Tidak
-Metode bayar: cash di tempat/transfer
-Catatan Khusus: </textarea>
-                        <small>*Klik dalam kotak untuk menyeleksi semua teks lalu salin</small>
+
+                    <div class="of-field">
+                        <label for="f_alamat" data-i18n="form_alamat_label">Alamat customer</label>
+                        <textarea id="f_alamat" rows="2" placeholder="Alamat penjemputan cucian" data-i18n-placeholder="form_alamat_ph"></textarea>
                     </div>
-                    <p>Khusus pembayaran transfer, tunggu admin mengirimkan nomor rekening resmi sebelum melakukan transaksi. Setelah itu Kirim bukti pembayaran melalui DM Instagram atau chat WhatsApp. Admin akan memvalidasi pesananmu dan memberikan <strong>Token</strong></p>
-                </li>
-            </ol>
-        </div>
 
-        <!-- Langkah 2: Pantau Status Pesanan -->
-        <div class="step-card">
-            <h3>Langkah 2: Pantau Status Pesanan</h3>
-            <p>
-                Gunakan <strong>kode token</strong> resmi dari admin untuk memantau progres laundry kamu secara real-time. 
-                Kamu bisa <a href="{{ route('pesanan') }}" class="inline-link">Cek Pesanan di Sini</a>. 
-                Berikut adalah arti dari setiap status pesananmu:
-            </p>
-            
-            <div class="status-explanation">
-                <div class="status-item">
-                    <span class="dot process"></span>
-                    <p><strong>Diproses:</strong> Admin telah mengonfirmasi pesananmu dan sedang menyiapkan jadwal penjemputan.</p>
-                </div>
-                
-                <div class="status-item">
-                    <span class="dot pickup"></span>
-                    <p><strong>Dijemput:</strong> Driver kami sedang dalam perjalanan menuju lokasimu untuk mengambil pakaian.</p>
-                </div>
+                    <div class="of-row">
+                        <div class="of-field">
+                            <label for="f_tanggal" data-i18n="form_tanggal_label">Tanggal Penjemputan</label>
+                            <input id="f_tanggal" type="date">
+                        </div>
+                        <div class="of-field">
+                            <label for="f_jam" data-i18n="form_jam_label">Jam Penjemputan</label>
+                            <input id="f_jam" type="time">
+                        </div>
+                    </div>
 
-                <div class="status-item">
-                    <span class="dot searching"></span>
-                    <p><strong>Mencari Laundry:</strong> Pakaianmu sedang dalam proses pencarian outlet laundry terbaik untuk ditangani atau menuju alamat laundry pilihanmu.</p>
-                </div>
-                
-                <div class="status-item">
-                    <span class="dot washing"></span>
-                    <p><strong>Dicuci:</strong> Pakaianmu sudah sampai di outlet dan sedang ditangani oleh pihak laundry.</p>
-                </div>
+                    <div class="of-row">
+                        <div class="of-field">
+                            <label for="f_layanan" data-i18n="form_layanan_label">Jenis Layanan</label>
+                            <select id="f_layanan">
+                                <option value="" data-i18n="form_layanan_opt0">Pilih layanan</option>
+                                <option data-i18n="form_layanan_opt1">Cuci + Setrika</option>
+                                <option data-i18n="form_layanan_opt2">Cuci Kering</option>
+                                <option data-i18n="form_layanan_opt3">Setrika Saja</option>
+                                <option data-i18n="form_layanan_opt4">Cuci Sepatu</option>
+                                <option data-i18n="form_layanan_opt5">Bed Cover / Selimut</option>
+                            </select>
+                        </div>
+                        <div class="of-field">
+                            <label for="f_jumlah" data-i18n="form_jumlah_label">Estimasi Jumlah (kg/pcs)</label>
+                            <input id="f_jumlah" type="text" placeholder="mis. 5 kg" data-i18n-placeholder="form_jumlah_ph">
+                        </div>
+                    </div>
 
-                <div class="status-item">
-                    <span class="dot delivery"></span>
-                    <p><strong>Diantar:</strong> Pakaian sudah bersih dan wangi! Saat ini kurir sedang mengantarkannya kembali ke rumahmu.</p>
-                </div>
-                
-                <div class="status-item">
-                    <span class="dot finished"></span>
-                    <p><strong>Selesai:</strong> Pesanan telah diterima dengan baik. Terima kasih telah mempercayakan laundry kamu kepada kami!</p>
-                </div>
+                    <div class="of-field">
+                        <label for="f_laundry">
+                            <span data-i18n="form_laundry_label">Alamat laundry Pilihan</span>
+                            <span class="of-opt" data-i18n="form_opsional">(opsional)</span>
+                        </label>
+                        <input id="f_laundry" type="text" placeholder="Kosongkan jika diserahkan ke KlinKlin" data-i18n-placeholder="form_laundry_ph">
+                    </div>
+
+                    <div class="of-row">
+                        <div class="of-field">
+                            <label for="f_pilah" data-i18n="form_pilah_label">Jasa pilah</label>
+                            <select id="f_pilah">
+                                <option value="" data-i18n="form_pilih">Pilih</option>
+                                <option data-i18n="form_pilah_opt1">Iya</option>
+                                <option data-i18n="form_pilah_opt2">Tidak</option>
+                            </select>
+                        </div>
+                        <div class="of-field">
+                            <label for="f_bayar" data-i18n="form_bayar_label">Metode bayar</label>
+                            <select id="f_bayar">
+                                <option value="" data-i18n="form_pilih">Pilih</option>
+                                <option data-i18n="form_bayar_opt1">Cash di tempat</option>
+                                <option data-i18n="form_bayar_opt2">Transfer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="of-field">
+                        <label for="f_catatan">
+                            <span data-i18n="form_catatan_label">Catatan Khusus</span>
+                            <span class="of-opt" data-i18n="form_opsional">(opsional)</span>
+                        </label>
+                        <textarea id="f_catatan" rows="2" placeholder="Permintaan khusus, dll." data-i18n-placeholder="form_catatan_ph"></textarea>
+                    </div>
+                </form>
             </div>
+
+            <!-- KANAN: preview langsung + aksi -->
+            <aside class="order-side">
+                <div class="order-preview-card">
+                    <div class="order-preview-head">
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                        <span class="order-preview-title" data-i18n="order_preview">Preview Pesanan</span>
+                    </div>
+                    <pre id="orderPreview" class="order-preview-text"></pre>
+                </div>
+
+                <div class="order-actions">
+                    <button type="button" id="orderCopy" class="order-btn order-btn-ghost" data-copied="Tersalin!">
+                        <svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <svg class="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        <span class="label" data-i18n="order_copy">Salin Format</span>
+                    </button>
+                    <a href="#" id="orderSendWa" class="order-btn order-btn-wa">
+                        <img src="image/wa.png" alt="">
+                        <span data-i18n="order_send_wa">Kirim via WhatsApp</span>
+                    </a>
+                    <a href="#" id="orderSendIg" class="order-btn order-btn-ig">
+                        <img src="image/ig.png" alt="">
+                        <span data-i18n="order_send_ig">Salin &amp; Buka Instagram</span>
+                    </a>
+                </div>
+            </aside>
         </div>
     </div>
-</div>
+</section>
+
+@include('footer')
+
+<script src="asset/js/landing.js"></script>
+<script src="asset/js/order.js"></script>
+
 </body>
 </html>

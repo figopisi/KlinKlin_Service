@@ -18,17 +18,27 @@
     <button class="hamburger" type="button" aria-label="Menu">
         <span></span><span></span><span></span>
     </button>
-    <a href="#" class="brand">
+    <a href="{{ route('index') }}#" class="brand">
         <img class="brand-icon" src="{{ asset('image/Logo.png') }}" alt="KlinKlin">
         <img class="brand-word" src="{{ asset('image/logo-text.png') }}" alt="klinklin"
              onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'brand-text',textContent:'klinklin'}))">
     </a>
 
     <nav class="nav-links">
-        <a href="#tentang" data-i18n="nav_about">Tentang Kami</a>
-        <a href="#" class="active" data-i18n="nav_home">Beranda</a>
-        <a href="{{ route('pesanan') }}" data-i18n="nav_history">Cek Pesanan</a>
-    </nav>
+    <a href="{{ route('index') }}#tentang" data-i18n="nav_about">Tentang Kami</a>
+    <a href="{{ route('index') }}" class="active" data-i18n="nav_home">Beranda</a>
+    <a href="{{ route('pesanan') }}" data-i18n="nav_history">Cek Pesanan</a>
+
+    <button class="lang-switch lang-switch-mobile" type="button" aria-label="Ganti bahasa">
+        <span class="globe">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#F3F3F3" stroke-width="2">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/>
+            </svg>
+        </span>
+        <span class="lang-label">IDN</span>
+    </button>
+</nav>
 
     <button class="lang-switch" type="button" aria-label="Ganti bahasa">
         <span class="globe">
@@ -243,8 +253,53 @@
         </div>
 
     </div>
-    
 </section>
+
+    <!-- ===== HARGA / PRICING ===== -->
+<section id="harga" class="pricing">
+    <span class="pricing-bubble" aria-hidden="true"></span>
+    <div class="pricing-head">
+        <h2 class="pricing-title reveal" data-reveal="up" data-i18n-html="harga_title">Harga <strong>sangat</strong><br><span class="pt-big">Terjangkau</span></h2>
+        <p class="pricing-lead reveal" data-reveal="up" style="--delay:.1s" data-i18n-html="harga_lead"><strong>KlinKlin</strong> engga cuma Praktis, tapi harganya juga terjangkau banget buat semua kalangan. Tunggu apalagi ayo order sekarang juga!</p>
+    </div>
+
+    <div class="pricing-cards">
+        <div class="price-card reveal" data-reveal="up" style="--delay:.1s">
+            <div class="pc-label" data-i18n="pc1_label">Mulai dari</div>
+            <div class="pc-price">Rp 12.000</div>
+            <div class="pc-sub" data-i18n-html="pc1_sub">Pada kilometer <strong>Pertama</strong></div>
+            <ul class="pc-list">
+                <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc1_a">On Demand</span></li>
+                <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc1_b">Praktis</span></li>
+                <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc1_c">Terpercaya</span></li>
+            </ul>
+        </div>
+
+        <div class="price-card reveal" data-reveal="up" style="--delay:.2s">
+            <div class="pc-label" data-i18n="pc2_label">Dilanjutkan hanya</div>
+            <div class="pc-price">Rp 3.000</div>
+            <div class="pc-sub" data-i18n-html="pc2_sub">Pada kilometer <strong>Selanjutnya</strong></div>
+            <ul class="pc-list">
+                <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc2_a">Lebih jauh lebih murah</span></li>
+                <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc2_b">Anti kepanasan</span></li>
+                <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc2_c">Cocok buat kamu yang cari suasana baru</span></li>
+            </ul>
+        </div>
+
+        <div class="price-card reveal" data-reveal="up" style="--delay:.3s">
+            <div class="pc-label" data-i18n="pc3_label">Tambah</div>
+            <div class="pc-price">Rp 1.000</div>
+            <div class="pc-sub" data-i18n-html="pc3_sub">Mendapatkan <strong>jasa pilah kiloan</strong></div>
+            <ul class="pc-list">
+                <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc3_a">Pakaianmu terorganisir</span></li>
+                <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc3_b">Anti pusing</span></li>
+                <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc3_c">Anti baju hilang</span></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+@include('footer')
 
 <script src="{{ asset('asset/js/landing.js') }}"></script>
 

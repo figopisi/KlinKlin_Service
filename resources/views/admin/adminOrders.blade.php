@@ -41,7 +41,12 @@
     <!-- HEADER -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h1>Daftar Pesanan</h1>
-        <a href="{{ route('admin.dashboard') }}" class="back-btn">← Dashboard</a>
+        <div style="display:flex; gap:10px;">
+            <a href="{{ route('admin.orders.export', request()->query()) }}" class="back-btn">
+                ⬇ Export CSV
+            </a>
+            <a href="{{ route('admin.dashboard') }}" class="back-btn">← Dashboard</a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -56,15 +61,7 @@
         </div>
     @endif
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h1>Daftar Pesanan</h1>
-        <div style="display:flex; gap:10px;">
-            <a href="{{ route('admin.orders.export', request()->query()) }}" class="back-btn">
-                ⬇ Export CSV
-            </a>
-            <a href="{{ route('admin.dashboard') }}" class="back-btn">← Dashboard</a>
-        </div>
-    </div>
+    
 
     <!-- SEARCH + SORT + FILTER -->
     <form method="GET" action="{{ route('admin.orders') }}" 

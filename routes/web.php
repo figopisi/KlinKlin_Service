@@ -59,6 +59,12 @@ Route::post('/admin/logout', [AuthController::class, 'logout'])
     ->middleware('auth.admin')
     ->name('logout');
 
+Route::delete('/orders/{id}', [OrderController::class, 'destroy'])
+    ->name('admin.orders.destroy');
+
+Route::get('/orders/export', [OrderController::class, 'exportCsv'])
+    ->name('admin.orders.export');
+
 /*
 |--------------------------------------------------------------------------
 | ADMIN (PROTECTED)

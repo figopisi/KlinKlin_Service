@@ -338,6 +338,23 @@
     </div>
 </div>
 
+{{-- ========================= --}}
+{{-- MODAL: HAPUS PESANAN      --}}
+{{-- ========================= --}}
+<div class="modal-overlay" id="modalHapusPesanan">
+    <div class="modal-box">
+        <div class="modal-icon">🗑️</div>
+        <div class="modal-title">Hapus Pesanan?</div>
+        <div class="modal-desc">
+            Pesanan <strong>{{ $order->token }}</strong> beserta seluruh riwayat driver dan foto bukti akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.
+        </div>
+        <div class="modal-actions">
+            <button class="modal-cancel" onclick="tutupModal('modalHapusPesanan')">✖ Batal</button>
+            <button class="modal-confirm-lepas" onclick="submitForm('modalHapusPesanan')">✔ Ya, Hapus</button>
+        </div>
+    </div>
+</div>
+
 <div class="container">
 
     {{-- BACK --}}
@@ -689,8 +706,23 @@
         @endif
 
     </div>
-
 </div>
+
+ {{-- FORM HAPUS PESANAN (tersembunyi, di luar form update) --}}
+    <form id="formHapusPesanan"
+        action="{{ route('admin.orders.destroy', $order->id) }}"
+        method="POST" style="display:none;">
+        @csrf
+        @method('DELETE')
+    </form>
+
+    <div class="section-card" style="margin-bottom: 24px;">
+        <div class="section-title">Zona Berbahaya</div>
+        <button type="button" class="btn-danger"
+                onclick="bukaModalHapusPesanan('formHapusPesanan')">
+            🗑️ Hapus Pesanan Ini
+        </button>
+    </div>
 
 <script>
     let targetFormId = null;
@@ -710,6 +742,11 @@
     function bukaModalSimpanUpdate(formId) {
         targetFormId = formId;
         document.getElementById('modalSimpanUpdate').classList.add('active');
+    }
+
+    function bukaModalHapusPesanan(formId) {
+        targetFormId = formId;
+        document.getElementById('modalHapusPesanan').classList.add('active');
     }
 
     function tutupModal(modalId) {

@@ -44,6 +44,28 @@
         <a href="{{ route('admin.dashboard') }}" class="back-btn">← Dashboard</a>
     </div>
 
+    @if(session('success'))
+        <div style="padding:12px 16px; background:#d4edda; color:#155724; border-radius:10px; margin-bottom:16px;">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div style="padding:12px 16px; background:#f8d7da; color:#721c24; border-radius:10px; margin-bottom:16px;">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h1>Daftar Pesanan</h1>
+        <div style="display:flex; gap:10px;">
+            <a href="{{ route('admin.orders.export', request()->query()) }}" class="back-btn">
+                ⬇ Export CSV
+            </a>
+            <a href="{{ route('admin.dashboard') }}" class="back-btn">← Dashboard</a>
+        </div>
+    </div>
+
     <!-- SEARCH + SORT + FILTER -->
     <form method="GET" action="{{ route('admin.orders') }}" 
         style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -126,10 +148,20 @@
                         Rp {{ number_format($order->fee) }}
                     </td>
 
-                    <td style="padding:10px;">
+                    <td style="padding:10px; display:flex; gap:6px; justify-content:center;">
                         <a href="{{ route('admin.orders.detail', $order->id) }}" class="back-btn">
                             Detail
                         </a>
+
+                        <form action="{{ route('admin.orders.destroy', $order->id) }}" 
+                              method="POST" 
+                              onsubmit="return confirm('Yakin hapus pesanan {{ $order->token }}? Data tidak bisa dikembalikan.');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="back-btn" style="background:#c0392b; border:none; cursor:pointer;">
+                                Hapus
+                            </button>
+                        </form>
                     </td>
                 </tr>
 

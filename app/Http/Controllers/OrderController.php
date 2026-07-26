@@ -162,4 +162,72 @@ public function store(Request $request)
 
     return back()->with('success', 'Driver berhasil dilepas dari pesanan');
 }
+// ================= DELETE ORDER ================= oleh admin
+    public function destroy($id)
+    {
+        $order = Order::findOrFail($id);
+
+        $order->driverLogs()->delete();
+        $order->photos()->delete();
+        $order->delete();
+
+        return redirect()->route('admin.orders')
+            ->with('success', 'Pesanan berhasil dihapus');
+    }
+
+    public function exportCsv(Request $request)
+    {
+        $query = Order::query();
+
+        if ($request->filled('search')) {
+            $query->where('token', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $sort = $request->get('sort', 'created_at');
+        $direction = $request->get('direction', 'desc');
+
+        if (in_array($sort, ['created_at', 'fee']) && in_array($direction, ['asc', 'desc'])) {
+            $query->orderBy($sort, $direction);
+        }
+
+        $orders = $query->get();
+
+        $filename = 'pesanan_' . now()->format('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () use ($orders) {
+            $file = fopen('php://output', 'w');
+
+            // BOM biar Excel baca UTF-8 dengan benar (karakter ñ, é, dll aman)
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, ['ID', 'Token', 'Nama', 'Phone', 'Alamat Customer', 'Alamat Laundry', 'Status', 'Fee', 'Tanggal Dibuat']);
+
+            foreach ($orders as $order) {
+                fputcsv($file, [
+                    $order->id,
+                    $order->token,
+                    $order->nama,
+                    $order->phone,
+                    $order->alamat_customer,
+                    $order->alamat_laundry,
+                    $order->status,
+                    $order->fee,
+                    $order->created_at->format('Y-m-d H:i'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

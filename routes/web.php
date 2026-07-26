@@ -104,7 +104,7 @@ Route::middleware(['auth.driver'])->prefix('driver')->name('driver.')->group(fun
     Route::post('/pesanan/{id}/update', [DriverController::class, 'updateByDriver'])->name('pesanan.update');
 });
 
-// routes/web.php
+
 Route::post('/driver/pesanan/{id}/foto/pengambilan', [DriverController::class, 'uploadBuktiPengambilan'])->name('driver.foto.pengambilan');
 Route::post('/driver/pesanan/{id}/foto/nota', [DriverController::class, 'uploadBuktiNota'])->name('driver.foto.nota');
 Route::post('/driver/pesanan/{id}/foto/pengiriman', [DriverController::class, 'uploadBuktiPengiriman'])->name('driver.foto.pengiriman');
@@ -114,3 +114,21 @@ Route::post('/admin/pesanan/{id}/foto/pengambilan', [DriverController::class, 'u
 Route::post('/admin/pesanan/{id}/foto/nota', [DriverController::class, 'uploadBuktiNota'])->name('admin.foto.nota');
 Route::post('/admin/pesanan/{id}/foto/pengiriman', [DriverController::class, 'uploadBuktiPengiriman'])->name('admin.foto.pengiriman');
 Route::delete('/admin/foto/{photoId}', [DriverController::class, 'deleteFoto'])->name('admin.foto.delete');
+
+
+//Promotion routes
+use App\Http\Controllers\PromotionController;
+
+// Customer - lihat promo yang aktif & masih berlaku
+Route::get('/promosi', [PromotionController::class, 'index'])
+    ->name('promosi.index');
+
+// Admin - CRUD penuh
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/promosi', [PromotionController::class, 'adminIndex'])->name('promosi.index');
+    Route::get('/promosi/create', [PromotionController::class, 'create'])->name('promosi.create');
+    Route::post('/promosi', [PromotionController::class, 'store'])->name('promosi.store');
+    Route::get('/promosi/{promosi}/edit', [PromotionController::class, 'edit'])->name('promosi.edit');
+    Route::put('/promosi/{promosi}', [PromotionController::class, 'update'])->name('promosi.update');
+    Route::delete('/promosi/{promosi}', [PromotionController::class, 'destroy'])->name('promosi.destroy');
+});

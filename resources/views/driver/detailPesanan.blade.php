@@ -1,210 +1,338 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Pesanan</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('asset/css/style.css') }}">
-    <style>
-        .foto-group {
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-        .foto-label {
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            opacity: .7;
-            margin-bottom: 10px;
-        }
-        .foto-preview { margin-bottom: 10px; }
-        .foto-preview img {
-            width: 100%;
-            max-width: 320px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            object-fit: cover;
-        }
-        .foto-locked {
-            font-size: 12px;
-            color: #94a3b8;
-            display: block;
-            margin-top: 6px;
-        }
-        .foto-empty { font-size: 13px; color: #94a3b8; display: block; }
-        .foto-uploading {
-            font-size: 13px;
-            color: #2563eb;
-            display: none;
-            margin-top: 6px;
-            font-weight: 600;
-        }
-        .btn-ambil-foto {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-ambil-foto:hover { background: #1d4ed8; }
-        .btn-hapus-foto {
-            background: #fee2e2;
-            color: #991b1b;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-            margin-top: 6px;
-            display: inline-block;
-        }
-        .btn-hapus-foto:hover { background: #fecaca; }
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            z-index: 999;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-box {
-            background: white;
-            border-radius: 20px;
-            padding: 32px 28px;
-            max-width: 380px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            text-align: center;
-            animation: modalIn .2s ease;
-        }
-        @keyframes modalIn {
-            from { transform: scale(.9); opacity: 0; }
-            to   { transform: scale(1);  opacity: 1; }
-        }
-        .modal-icon  { font-size: 42px; margin-bottom: 12px; }
-        .modal-title { font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
-        .modal-desc  { font-size: 14px; color: #64748b; margin-bottom: 24px; line-height: 1.6; }
-        .modal-desc strong { color: #1e293b; }
-        .modal-actions { display: flex; gap: 10px; }
-        .modal-actions button {
-            flex: 1; padding: 11px; border: none; border-radius: 10px;
-            font-size: 14px; font-weight: 700; cursor: pointer;
-            font-family: inherit; transition: .15s;
-        }
-        .modal-cancel { background: #f1f5f9; color: #475569; }
-        .modal-cancel:hover { background: #e2e8f0; }
-        .modal-confirm-update { background: #f97316; color: white; }
-        .modal-confirm-update:hover { background: #ea6c00; }
-        .modal-confirm-lepas { background: #ef4444; color: white; }
-        .modal-confirm-lepas:hover { background: #dc2626; }
-        .status-Diproses        { background: #dbeafe; color: #1d4ed8; }
-        .status-Dijemput        { background: #fef9c3; color: #a16207; }
-        .status-Mencari-Laundry { background: #ffedd5; color: #c2410c; }
-        .status-Dicuci          { background: #ede9fe; color: #6d28d9; }
-        .status-Diantar         { background: #d1fae5; color: #065f46; }
-        .status-Selesai         { background: #dcfce7; color: #15803d; }
-        .btn {
-            width: 100%; padding: 10px; border: none; border-radius: 8px;
-            font-size: 14px; font-weight: 600; cursor: pointer;
-            font-family: inherit; margin-top: 8px;
-            text-align: center; display: block; text-decoration: none;
-        }
-        .btn-update { background: #f97316; color: white; }
-        .btn-update:hover { background: #ea6c00; }
-        .btn-lepas { background: #ef4444; color: white; }
-        .btn-lepas:hover { background: #dc2626; }
-        .back-btn-container { margin-bottom: 20px; }
-        .back-btn {
-            display: inline-block; padding: 10px 20px;
-            background: #05558E; color: white; border-radius: 10px;
-            text-decoration: none; font-weight: 700; font-size: 14px;
-            border: none; cursor: pointer; font-family: inherit;
-        }
-        .back-btn:hover { background: #044a7a; }
-        .inline-link { color: #2563eb; font-weight: 600; font-size: 14px; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #f4f6fb; min-height: 100vh; padding: 32px 20px;
-        }
-        .container { max-width: 1000px; margin: 0 auto; }
-        h1 { font-size: 24px; font-weight: 800; color: #1e293b; margin-bottom: 20px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        .form-group { display: flex; flex-direction: column; margin-bottom: 14px; }
-        .form-group label {
-            font-size: 13px; font-weight: 700; margin-bottom: 4px;
-            text-transform: uppercase; opacity: .7;
-        }
-        .form-group input, .form-group textarea {
-            padding: 12px 14px; border-radius: 12px;
-            border: 1px solid #ddd; font-size: 15px; font-family: inherit;
-        }
-        .form-group textarea { min-height: 80px; resize: vertical; }
-        .readonly {
-            background: #f1f5f9; color: #475569;
-            font-weight: 600; cursor: not-allowed; border-color: #e2e8f0;
-        }
-        .editable { background: #fffbeb; border: 2px solid #f59e0b; }
-        .editable:focus {
-            outline: none; border-color: #d97706;
-            box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
-        }
-        .editable-badge {
-            display: inline-block; margin-left: 6px; font-size: 10px;
-            background: #fef3c7; color: #92400e; padding: 2px 7px;
-            border-radius: 999px; font-weight: 700;
-            text-transform: uppercase; vertical-align: middle;
-        }
-        .section-card {
-            background: white; padding: 24px; border-radius: 20px;
-            box-shadow: 0 10px 22px rgba(0,0,0,.08);
-        }
-        .section-title { font-size: 18px; font-weight: 800; margin-bottom: 16px; color: #05558E; }
-        .info-banner {
-            border-radius: 12px; padding: 13px 16px; margin-bottom: 20px;
-            font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px;
-        }
-        .info-banner.editable-mode { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
-        .info-banner.readonly-mode { background: #f1f5f9; border: 1px solid #e2e8f0; color: #475569; }
-        .status-badge {
-            display: inline-block; padding: 6px 14px;
-            border-radius: 999px; font-size: 13px; font-weight: 700;
-        }
-        .timeline { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
-        .timeline-item { border-left: 4px solid #05558E; padding-left: 14px; padding-top: 2px; padding-bottom: 2px; }
-        .timeline-driver { font-weight: 800; font-size: 15px; color: #05558E; }
-        .timeline-status {
-            display: inline-block; margin-top: 4px; padding: 4px 10px;
-            border-radius: 999px; background: #eef6ff; color: #05558E;
-            font-size: 13px; font-weight: 700;
-        }
-        .timeline-date { margin-top: 6px; font-size: 13px; color: #666; }
-        .empty {
-            text-align: center; color: #94a3b8; font-size: 14px;
-            padding: 20px; background: #f8fafc; border-radius: 12px;
-        }
-        .alert { padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; font-size: 14px; }
-        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-        .alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .submit-wrap { text-align: center; margin-top: 30px; }
-        @media(max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
-    </style>
-</head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detail Pesanan — Driver</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ asset('asset/css/landingpage.css') }}">
+<style>
+    /* ================= DETAIL PESANAN DRIVER — token landingpage.css, mobile-first ================= */
+
+    body{ padding-bottom: 40px; }
+
+    .d-topbar{
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        background: linear-gradient(90deg, #1F324E 0%, #4873B4 100%);
+        box-shadow: 0 6px 20px rgba(31,50,78,.22);
+    }
+    .d-back{
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #fff;
+        text-decoration: none;
+        font-size: 13.5px;
+        font-weight: 700;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.26);
+        padding: 9px 14px;
+        border-radius: 12px;
+        transition: background .2s var(--ease);
+    }
+    .d-back:hover{ background: rgba(255,255,255,.24); }
+    .d-topbar h1{
+        color: #fff;
+        font-size: 16px;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .d-wrap{
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 20px 18px 10px;
+        position: relative;
+        z-index: 5;
+    }
+
+    .d-alert{
+        padding: 13px 16px;
+        border-radius: 14px;
+        font-size: 13.5px;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+    .d-alert-success{ background: #E4F7EB; color: #1F8A4C; }
+    .d-alert-error{ background: #FDECEC; color: #C0392B; }
+
+    /* ---- INFO BANNER ---- */
+    .d-banner{
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 14px 16px;
+        border-radius: 16px;
+        font-size: 13px;
+        line-height: 1.55;
+        font-weight: 500;
+        margin-bottom: 18px;
+    }
+    .d-banner.editable{ background: #FFF7E0; color: #8A6D1F; border: 1px solid #F5E1A0; }
+    .d-banner.readonly{ background: #EEF3FC; color: var(--blue); border: 1px solid #D7E3F7; }
+    .d-banner.warn{ background: #FFF7E0; color: #8A6D1F; border: 1px solid #F5E1A0; }
+
+    /* ---- CARD ---- */
+    .d-card{
+        background: #fff;
+        border-radius: 22px;
+        padding: 22px 20px;
+        box-shadow: 0 8px 24px rgba(31,50,78,.09);
+        margin-bottom: 16px;
+    }
+    .d-card-title{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14.5px;
+        font-weight: 800;
+        color: var(--navy);
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #EEF1F6;
+    }
+    .d-card-title:not(:first-child){ margin-top: 22px; }
+
+    .d-field{ margin-bottom: 14px; }
+    .d-field:last-child{ margin-bottom: 0; }
+    .d-field label{
+        display: block;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: rgba(14,23,38,.5);
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        margin-bottom: 6px;
+    }
+    .d-field .editable-badge{
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0;
+        color: #8A6D1F;
+        background: #FFF3C4;
+        padding: 2px 8px;
+        border-radius: 8px;
+        margin-left: 6px;
+    }
+    .d-field input,
+    .d-field textarea{
+        width: 100%;
+        border: none;
+        background: #F4F6FA;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 14px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: var(--navy);
+        font-weight: 600;
+        box-sizing: border-box;
+    }
+    .d-field textarea{ resize: vertical; min-height: 60px; line-height: 1.5; }
+    .d-field input[readonly],
+    .d-field textarea[readonly]{
+        color: rgba(14,23,38,.65);
+        font-weight: 500;
+    }
+    .d-field input.editable,
+    .d-field textarea.editable{
+        background: #FFF9E6;
+        border: 1.5px solid #F5DE8A;
+        outline: none;
+    }
+    .d-field input.editable:focus,
+    .d-field textarea.editable:focus{
+        border-color: var(--blue-cta);
+        box-shadow: 0 0 0 4px rgba(102,156,242,.18);
+    }
+    .d-err{ color: #C0392B; font-size: 11.5px; margin-top: 5px; font-weight: 600; }
+
+    .d-status-inline{
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 800;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        padding: 7px 15px;
+        border-radius: 20px;
+        color: #fff;
+    }
+    .d-status-Diproses{ background: #64748B; }
+    .d-status-Dijemput{ background: #3B82F6; }
+    .d-status-Mencari-Laundry{ background: #8B5CF6; }
+    .d-status-Dicuci{ background: #8B5CF6; }
+    .d-status-Diantar{ background: #F0A93B; }
+    .d-status-Selesai{ background: #2FAE64; }
+
+    .d-inline-link{
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--blue);
+        text-decoration: none;
+    }
+
+    .d-submit-wrap{ margin-top: 4px; }
+
+    /* ---- BUTTONS ---- */
+    .d-btn{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 14px;
+        border-radius: 15px;
+        font-size: 14.5px;
+        font-weight: 700;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: transform .2s var(--ease), opacity .2s ease;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    .d-btn:active{ transform: scale(.98); }
+    .d-btn-save{
+        background: var(--navy);
+        color: #fff;
+        box-shadow: 0 10px 22px rgba(31,50,78,.25);
+    }
+    .d-btn-update{
+        background: linear-gradient(263deg, #669CF2 0%, #3B5A8C 100%);
+        color: #fff;
+        box-shadow: 0 10px 22px rgba(102,156,242,.35);
+    }
+    .d-btn-lepas{
+        background: #FDECEC;
+        color: #C0392B;
+        border: 1.5px solid #F7C9C9;
+    }
+    .d-btn-foto{
+        flex: 1;
+        background: #F3F6FB;
+        color: var(--navy);
+        border: 1.5px solid #E1E8F5;
+        padding: 12px;
+        font-size: 13.5px;
+    }
+    .d-btn-hapus-foto{
+        width: 100%;
+        background: #FDECEC;
+        color: #C0392B;
+        border: 1.5px solid #F7C9C9;
+        padding: 11px;
+        font-size: 13px;
+        margin-top: 10px;
+    }
+    .d-foto-row{ display: flex; gap: 10px; margin-top: 4px; }
+
+    /* ---- FOTO GROUP ---- */
+    .d-foto-group{ margin-bottom: 20px; }
+    .d-foto-group:last-child{ margin-bottom: 0; }
+    .d-foto-label{
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--navy);
+        margin-bottom: 10px;
+    }
+    .d-foto-preview img{
+        width: 100%;
+        border-radius: 16px;
+        display: block;
+        box-shadow: 0 6px 18px rgba(31,50,78,.14);
+        margin-bottom: 4px;
+    }
+    .d-foto-locked, .d-foto-empty{
+        display: block;
+        font-size: 12px;
+        color: rgba(14,23,38,.45);
+        font-weight: 500;
+        margin-top: 6px;
+    }
+    .d-foto-uploading{
+        display: none;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--blue);
+        margin-top: 8px;
+    }
+
+    /* ---- TIMELINE ---- */
+    .d-timeline{ display: flex; flex-direction: column; gap: 12px; }
+    .d-timeline-item{
+        padding: 12px 14px;
+        background: #F7F9FC;
+        border-radius: 14px;
+        border-left: 3px solid var(--blue);
+    }
+    .d-timeline-driver{ font-size: 13px; font-weight: 700; color: var(--navy); }
+    .d-timeline-status{ font-size: 12.5px; font-weight: 600; color: var(--blue); margin-top: 2px; }
+    .d-timeline-date{ font-size: 11.5px; color: rgba(14,23,38,.5); margin-top: 3px; }
+    .d-empty-text{ font-size: 13px; color: rgba(14,23,38,.5); }
+
+    /* ---- DANGER ZONE ---- */
+    .d-danger-card{ border: 1.5px solid #F7C9C9; }
+    .d-danger-card .d-card-title{ color: #C0392B; border-bottom-color: #FBE0E0; }
+    .d-danger-desc{
+        font-size: 12.5px;
+        color: rgba(14,23,38,.55);
+        line-height: 1.6;
+        margin-bottom: 14px;
+    }
+
+    /* ---- MODAL ---- */
+    .modal-overlay{
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(31,50,78,.55);
+        backdrop-filter: blur(3px);
+        align-items: center; justify-content: center;
+        z-index: 200;
+        padding: 20px;
+    }
+    .modal-overlay.active{ display: flex; }
+    .modal-box{
+        background: #fff;
+        border-radius: 22px;
+        padding: 28px 24px;
+        max-width: 380px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 24px 60px rgba(31,50,78,.30);
+    }
+    .modal-icon{ font-size: 34px; margin-bottom: 10px; }
+    .modal-title{ font-size: 18px; font-weight: 800; color: var(--navy); margin-bottom: 10px; }
+    .modal-desc{ font-size: 13.5px; color: rgba(14,23,38,.65); line-height: 1.6; margin-bottom: 22px; }
+    .modal-desc strong{ color: var(--navy); }
+    .modal-actions{ display: flex; gap: 10px; }
+    .modal-actions button{
+        flex: 1; padding: 13px; border-radius: 13px;
+        font-weight: 700; font-size: 13.5px; cursor: pointer;
+        border: none; font-family: inherit;
+    }
+    .modal-cancel{ background: #F1F3F7; color: rgba(14,23,38,.6); }
+    .modal-confirm-update{ background: linear-gradient(263deg, #669CF2 0%, #3B5A8C 100%); color: #fff; }
+    .modal-confirm-lepas{ background: #E5484D; color: #fff; }
+
+    @media (min-width: 700px){
+        .d-foto-preview img{ max-width: 360px; }
+    }
+</style>
+</head>
 <body>
 
 {{-- MODAL: UPDATE STATUS --}}
@@ -246,28 +374,27 @@
     </div>
 </div>
 
-<div class="container">
-
-    <div class="back-btn-container">
-        <a href="{{ route('driver.dashboard') }}" class="back-btn">← Kembali ke Dashboard</a>
-    </div>
-
+<div class="d-topbar">
+    <a href="{{ route('driver.dashboard') }}" class="d-back">← Dashboard</a>
     <h1>Detail Pesanan</h1>
+</div>
+
+<div class="d-wrap">
 
     @if(session('success'))
-        <div class="alert alert-success">✅ {{ session('success') }}</div>
+        <div class="d-alert d-alert-success">✅ {{ session('success') }}</div>
     @endif
     @if(session('error'))
-        <div class="alert alert-error">❌ {{ session('error') }}</div>
+        <div class="d-alert d-alert-error">❌ {{ session('error') }}</div>
     @endif
 
     {{-- BANNER INFO MODE --}}
     @if($bisaEdit)
-        <div class="info-banner editable-mode">
+        <div class="d-banner editable">
             ✏️ Kamu bisa mengubah field berlatar kuning karena pesanan sedang berstatus Dijemput atau mencari Laundry.
         </div>
     @else
-        <div class="info-banner readonly-mode">
+        <div class="d-banner readonly">
             🔒 Kamu hanya bisa melihat detail pesanan ini.
             @if($order->status === 'Dijemput' && $order->current_driver_id != session('driver_id'))
                 (Pesanan dipegang driver lain.)
@@ -287,126 +414,104 @@
         @csrf
     @endif
 
-        <div class="form-grid">
-
-            {{-- KIRI --}}
-            <div class="section-card">
-                <div class="section-title">Customer</div>
-                <div class="form-group">
-                    <label>Nama</label>
-                    <input type="text" value="{{ $order->nama }}" class="readonly" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Phone</label>
-                    <input type="text" value="{{ $order->phone }}" class="readonly" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Alamat Customer</label>
-                    <textarea class="readonly" readonly>{{ $order->alamat_customer }}</textarea>
-                </div>
-
-                <div class="section-title">Laundry</div>
-                <div class="form-group">
-                    @if($bisaEdit)
-                        <label>Alamat Laundry <span class="editable-badge">✏️ bisa diubah</span></label>
-                        <textarea name="alamat_laundry" class="editable">{{ $order->alamat_laundry }}</textarea>
-                        @error('alamat_laundry')
-                            <span style="color:#dc2626;font-size:12px;margin-top:4px;">{{ $message }}</span>
-                        @enderror
-                    @else
-                        <label>Alamat Laundry</label>
-                        <textarea class="readonly" readonly>{{ $order->alamat_laundry }}</textarea>
-                    @endif
-                </div>
-                <div class="form-group">
-                    @if($bisaEdit)
-                        <label>Phone Laundry <span class="editable-badge">✏️ bisa diubah</span></label>
-                        <input type="text" name="phone_laundry" value="{{ $order->phone_laundry }}" class="editable">
-                        @error('phone_laundry')
-                            <span style="color:#dc2626;font-size:12px;margin-top:4px;">{{ $message }}</span>
-                        @enderror
-                    @else
-                        <label>Phone Laundry</label>
-                        <input type="text" value="{{ $order->phone_laundry }}" class="readonly" readonly>
-                    @endif
-                </div>
+        <div class="d-card">
+            <div class="d-card-title">👤 Customer</div>
+            <div class="d-field">
+                <label>Nama</label>
+                <input type="text" value="{{ $order->nama }}" readonly>
             </div>
-            {{-- END KIRI --}}
-
-            {{-- KANAN --}}
-            <div class="section-card">
-                <div class="section-title">Order</div>
-                <div class="form-group">
-                    <label>Token</label>
-                    <input type="text" value="{{ $order->token }}" class="readonly" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Status</label><br>
-                    <span class="status-badge status-{{ str_replace(' ', '-', $order->status) }}">
-                        {{ $order->status }}
-                    </span>
-                </div>
-                <div class="form-group">
-                    <label>Jenis Layanan</label>
-                    <input type="text" value="{{ $order->jenis_layanan ?? '-' }}" class="readonly" readonly>
-                </div>
-                <div class="form-group">
-                    @if($bisaEdit)
-                        <label>Estimasi Jumlah Laundry <span class="editable-badge">✏️ bisa diubah</span></label>
-                        <input type="text" name="estimasi_jumlah_laundry"
-                               value="{{ $order->estimasi_jumlah_laundry }}"
-                               class="editable" placeholder="Contoh: 5 kg">
-                        @error('estimasi_jumlah_laundry')
-                            <span style="color:#dc2626;font-size:12px;margin-top:4px;">{{ $message }}</span>
-                        @enderror
-                    @else
-                        <label>Estimasi Jumlah Laundry</label>
-                        <input type="text" value="{{ $order->estimasi_jumlah_laundry ?? '-' }}" class="readonly" readonly>
-                    @endif
-                </div>
-                <div class="form-group">
-                    <label>Menggunakan Pemilahan Pakaian</label>
-                    <input type="text" value="{{ $order->is_sorted ? 'Ya' : 'Tidak' }}" class="readonly" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Catatan</label>
-                    <textarea class="readonly" readonly>{{ $order->note ?? '-' }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Tanggal Penjemputan</label>
-                    <input type="text"
-                           value="{{ $order->tanggal_penjemputan ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->translatedFormat('d F Y - H:i') : '-' }}"
-                           class="readonly" readonly>
-                </div>
-                <div class="form-group">
-                    @if($bisaEdit)
-                        <label>Foto Semua Pakaian <span class="editable-badge">✏️ bisa diubah</span></label>
-                        <input type="text" name="dokumentasi_pakaian"
-                               value="{{ $order->dokumentasi_pakaian }}"
-                               class="editable" placeholder="Masukkan link dokumentasi">
-                        @error('dokumentasi_pakaian')
-                            <span style="color:#dc2626;font-size:12px;margin-top:4px;">{{ $message }}</span>
-                        @enderror
-                    @else
-                        <label>Dokumentasi</label>
-                        <input type="text" value="{{ $order->dokumentasi_pakaian ?? '-' }}" class="readonly" readonly>
-                    @endif
-                    @if($order->dokumentasi_pakaian)
-                        <a href="{{ $order->dokumentasi_pakaian }}" target="_blank"
-                           class="inline-link" style="margin-top:6px;display:inline-block;">
-                            🔗 Lihat Dokumentasi
-                        </a>
-                    @endif
-                </div>
+            <div class="d-field">
+                <label>Phone</label>
+                <input type="text" value="{{ $order->phone }}" readonly>
             </div>
-            {{-- END KANAN --}}
+            <div class="d-field">
+                <label>Alamat Customer</label>
+                <textarea readonly>{{ $order->alamat_customer }}</textarea>
+            </div>
 
+            <div class="d-card-title">🧺 Laundry</div>
+            <div class="d-field">
+                @if($bisaEdit)
+                    <label>Alamat Laundry <span class="editable-badge">bisa diubah</span></label>
+                    <textarea name="alamat_laundry" class="editable">{{ $order->alamat_laundry }}</textarea>
+                    @error('alamat_laundry') <div class="d-err">{{ $message }}</div> @enderror
+                @else
+                    <label>Alamat Laundry</label>
+                    <textarea readonly>{{ $order->alamat_laundry }}</textarea>
+                @endif
+            </div>
+            <div class="d-field">
+                @if($bisaEdit)
+                    <label>Phone Laundry <span class="editable-badge">bisa diubah</span></label>
+                    <input type="text" name="phone_laundry" value="{{ $order->phone_laundry }}" class="editable">
+                    @error('phone_laundry') <div class="d-err">{{ $message }}</div> @enderror
+                @else
+                    <label>Phone Laundry</label>
+                    <input type="text" value="{{ $order->phone_laundry }}" readonly>
+                @endif
+            </div>
         </div>
-        {{-- END FORM-GRID --}}
+
+        <div class="d-card">
+            <div class="d-card-title">📦 Order</div>
+            <div class="d-field">
+                <label>Token</label>
+                <input type="text" value="{{ $order->token }}" readonly>
+            </div>
+            <div class="d-field">
+                <label>Status</label><br>
+                <span class="d-status-inline d-status-{{ str_replace(' ', '-', $order->status) }}">{{ $order->status }}</span>
+            </div>
+            <div class="d-field">
+                <label>Jenis Layanan</label>
+                <input type="text" value="{{ $order->jenis_layanan ?? '-' }}" readonly>
+            </div>
+            <div class="d-field">
+                @if($bisaEdit)
+                    <label>Estimasi Jumlah Laundry <span class="editable-badge">bisa diubah</span></label>
+                    <input type="text" name="estimasi_jumlah_laundry"
+                           value="{{ $order->estimasi_jumlah_laundry }}"
+                           class="editable" placeholder="Contoh: 5 kg">
+                    @error('estimasi_jumlah_laundry') <div class="d-err">{{ $message }}</div> @enderror
+                @else
+                    <label>Estimasi Jumlah Laundry</label>
+                    <input type="text" value="{{ $order->estimasi_jumlah_laundry ?? '-' }}" readonly>
+                @endif
+            </div>
+            <div class="d-field">
+                <label>Pemilahan Pakaian</label>
+                <input type="text" value="{{ $order->is_sorted ? 'Ya' : 'Tidak' }}" readonly>
+            </div>
+            <div class="d-field">
+                <label>Catatan</label>
+                <textarea readonly>{{ $order->note ?? '-' }}</textarea>
+            </div>
+            <div class="d-field">
+                <label>Tanggal Penjemputan</label>
+                <input type="text"
+                       value="{{ $order->tanggal_penjemputan ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->translatedFormat('d F Y - H:i') : '-' }}"
+                       readonly>
+            </div>
+            <div class="d-field">
+                @if($bisaEdit)
+                    <label>Foto Semua Pakaian <span class="editable-badge">bisa diubah</span></label>
+                    <input type="text" name="dokumentasi_pakaian"
+                           value="{{ $order->dokumentasi_pakaian }}"
+                           class="editable" placeholder="Masukkan link dokumentasi">
+                    @error('dokumentasi_pakaian') <div class="d-err">{{ $message }}</div> @enderror
+                @else
+                    <label>Dokumentasi</label>
+                    <input type="text" value="{{ $order->dokumentasi_pakaian ?? '-' }}" readonly>
+                @endif
+                @if($order->dokumentasi_pakaian)
+                    <a href="{{ $order->dokumentasi_pakaian }}" target="_blank" class="d-inline-link">🔗 Lihat Dokumentasi</a>
+                @endif
+            </div>
+        </div>
 
         @if($bisaEdit)
-        <div class="submit-wrap">
-            <button type="submit" class="back-btn">💾 Simpan Perubahan</button>
+        <div class="d-submit-wrap">
+            <button type="submit" class="d-btn d-btn-save">💾 Simpan Perubahan</button>
         </div>
         @endif
 
@@ -432,8 +537,8 @@
     @endphp
 
     @if($statusIndex >= array_search('Dijemput', $statusOrder))
-    <div class="section-card" style="margin-top: 24px;">
-        <div class="section-title">📷 Foto Bukti</div>
+    <div class="d-card">
+        <div class="d-card-title">📷 Foto Bukti</div>
 
         @php
             $statusBerikutnya = match($order->status) {
@@ -451,94 +556,90 @@
         @endphp
 
         @if($isCurrentDriver && $statusBerikutnya && $fotoYangDibutuhkan)
-        <div class="info-banner" style="background:#fffbeb; border:1px solid #fde68a; color:#92400e; margin-bottom: 16px;">
+        <div class="d-banner warn" style="margin-bottom:18px;">
             ⚠️ Upload {{ $fotoYangDibutuhkan }} terlebih dahulu sebelum update status ke {{ $statusBerikutnya }}.
         </div>
         @endif
 
         {{-- BUKTI PENGAMBILAN --}}
-        <div class="foto-group">
-            <div class="foto-label">Bukti Pengambilan Baju</div>
+        <div class="d-foto-group">
+            <div class="d-foto-label">Bukti Pengambilan Baju</div>
             @if($fotoPengambilan)
-                <div class="foto-preview">
+                <div class="d-foto-preview">
                     <img src="{{ $fotoPengambilan->url }}" alt="Bukti Pengambilan">
                 </div>
                 @if($bisaHapusPengambilan)
                     <form id="formHapusFoto{{ $fotoPengambilan->id }}"
-                          action="{{ route('driver.foto.delete', $fotoPengambilan->id) }}"
-                          method="POST">
-                        @csrf
-                        @method('DELETE')
+                          action="{{ route('driver.foto.delete', $fotoPengambilan->id) }}" method="POST">
+                        @csrf @method('DELETE')
                     </form>
-                    <button type="button" class="btn-hapus-foto"
-                            onclick="bukaModalHapusFoto('formHapusFoto{{ $fotoPengambilan->id }}')">
-                        🗑️ Hapus Foto
-                    </button>
+                    <button type="button" class="d-btn d-btn-hapus-foto"
+                            onclick="bukaModalHapusFoto('formHapusFoto{{ $fotoPengambilan->id }}')">🗑️ Hapus Foto</button>
                 @else
-                    <small class="foto-locked">🔒 Foto tidak bisa dihapus setelah status berubah</small>
+                    <small class="d-foto-locked">🔒 Foto tidak bisa dihapus setelah status berubah</small>
                 @endif
             @else
                 @if($isCurrentDriver && $order->status === 'Dijemput')
                     <form id="formFotoPengambilan"
-                          action="{{ route('driver.foto.pengambilan', $order->id) }}"
-                          method="POST" enctype="multipart/form-data">
+                        action="{{ route('driver.foto.pengambilan', $order->id) }}"
+                        method="POST" enctype="multipart/form-data">
                         @csrf
-                        <input type="file" name="foto" id="inputPengambilan"
-                               accept="image/*" capture="environment"
-                               style="display:none;"
-                               onchange="autoUpload(this, 'formFotoPengambilan', 'uploadingPengambilan')">
+                        <input type="file" name="foto" id="inputPengambilanKamera"
+                            accept="image/*" capture="environment" style="display:none;"
+                            onchange="autoUpload(this, 'formFotoPengambilan', 'uploadingPengambilan')">
+                        <input type="file" name="foto" id="inputPengambilanGaleri"
+                            accept="image/*" style="display:none;"
+                            onchange="autoUpload(this, 'formFotoPengambilan', 'uploadingPengambilan')">
                     </form>
-                    <button type="button" class="btn-ambil-foto"
-                            onclick="document.getElementById('inputPengambilan').click()">
-                        📷 Ambil Foto
-                    </button>
-                    <span class="foto-uploading" id="uploadingPengambilan">⏳ Mengupload foto...</span>
+                    <div class="d-foto-row">
+                        <button type="button" class="d-btn d-btn-foto" onclick="document.getElementById('inputPengambilanKamera').click()">📷 Kamera</button>
+                        <button type="button" class="d-btn d-btn-foto" onclick="document.getElementById('inputPengambilanGaleri').click()">🖼️ Galeri</button>
+                    </div>
+                    <span class="d-foto-uploading" id="uploadingPengambilan">⏳ Mengupload foto...</span>
                 @else
-                    <small class="foto-empty">Belum ada foto</small>
+                    <small class="d-foto-empty">Belum ada foto</small>
                 @endif
             @endif
         </div>
 
         {{-- BUKTI NOTA --}}
         @if($statusIndex >= array_search('Mencari Laundry', $statusOrder))
-        <div class="foto-group">
-            <div class="foto-label">Bukti Nota Laundry</div>
+        <div class="d-foto-group">
+            <div class="d-foto-label">Bukti Nota Laundry</div>
             @if($fotoNota)
-                <div class="foto-preview">
+                <div class="d-foto-preview">
                     <img src="{{ $fotoNota->url }}" alt="Bukti Nota">
                 </div>
                 @if($bisaHapusNota)
                     <form id="formHapusFoto{{ $fotoNota->id }}"
-                          action="{{ route('driver.foto.delete', $fotoNota->id) }}"
-                          method="POST">
-                        @csrf
-                        @method('DELETE')
+                          action="{{ route('driver.foto.delete', $fotoNota->id) }}" method="POST">
+                        @csrf @method('DELETE')
                     </form>
-                    <button type="button" class="btn-hapus-foto"
-                            onclick="bukaModalHapusFoto('formHapusFoto{{ $fotoNota->id }}')">
-                        🗑️ Hapus Foto
-                    </button>
+                    <button type="button" class="d-btn d-btn-hapus-foto"
+                            onclick="bukaModalHapusFoto('formHapusFoto{{ $fotoNota->id }}')">🗑️ Hapus Foto</button>
                 @else
-                    <small class="foto-locked">🔒 Foto tidak bisa dihapus setelah status berubah</small>
+                    <small class="d-foto-locked">🔒 Foto tidak bisa dihapus setelah status berubah</small>
                 @endif
             @else
                 @if($isCurrentDriver && $order->status === 'Mencari Laundry')
                     <form id="formFotoNota"
-                          action="{{ route('driver.foto.nota', $order->id) }}"
-                          method="POST" enctype="multipart/form-data">
+                        action="{{ route('driver.foto.nota', $order->id) }}"
+                        method="POST" enctype="multipart/form-data">
                         @csrf
-                        <input type="file" name="foto" id="inputNota"
-                               accept="image/*" capture="environment"
-                               style="display:none;"
-                               onchange="autoUpload(this, 'formFotoNota', 'uploadingNota')">
+                        <input type="file" name="foto" id="inputNotaKamera"
+                            accept="image/*" capture="environment" style="display:none;"
+                            onchange="autoUpload(this, 'formFotoNota', 'uploadingNota')">
+                        <input type="file" name="foto" id="inputNotaGaleri"
+                            accept="image/*" style="display:none;"
+                            onchange="autoUpload(this, 'formFotoNota', 'uploadingNota')">
                     </form>
-                    <button type="button" class="btn-ambil-foto"
-                            onclick="document.getElementById('inputNota').click()">
-                        📷 Ambil Foto
-                    </button>
-                    <span class="foto-uploading" id="uploadingNota">⏳ Mengupload foto...</span>
+                    <div class="d-foto-row">
+                        <button type="button" class="d-btn d-btn-foto" onclick="document.getElementById('inputNotaKamera').click()">📷 Kamera</button>
+                        <button type="button" class="d-btn d-btn-foto" onclick="document.getElementById('inputNotaGaleri').click()">🖼️ Galeri</button>
+                    </div>
+                    <span class="d-foto-uploading" id="uploadingNota">⏳ Mengupload foto...</span>
                 @else
-                    <small class="foto-empty">Belum ada foto</small>
+                    <small class="d-foto-empty">Belum ada foto</small>
                 @endif
             @endif
         </div>
@@ -546,44 +647,42 @@
 
         {{-- BUKTI PENGIRIMAN --}}
         @if($statusIndex >= array_search('Diantar', $statusOrder))
-        <div class="foto-group">
-            <div class="foto-label">Bukti Pengiriman Baju</div>
+        <div class="d-foto-group">
+            <div class="d-foto-label">Bukti Pengiriman Baju</div>
             @if($fotoPengiriman)
-                <div class="foto-preview">
+                <div class="d-foto-preview">
                     <img src="{{ $fotoPengiriman->url }}" alt="Bukti Pengiriman">
                 </div>
                 @if($bisaHapusPengiriman)
                     <form id="formHapusFoto{{ $fotoPengiriman->id }}"
-                          action="{{ route('driver.foto.delete', $fotoPengiriman->id) }}"
-                          method="POST">
-                        @csrf
-                        @method('DELETE')
+                          action="{{ route('driver.foto.delete', $fotoPengiriman->id) }}" method="POST">
+                        @csrf @method('DELETE')
                     </form>
-                    <button type="button" class="btn-hapus-foto"
-                            onclick="bukaModalHapusFoto('formHapusFoto{{ $fotoPengiriman->id }}')">
-                        🗑️ Hapus Foto
-                    </button>
+                    <button type="button" class="d-btn d-btn-hapus-foto"
+                            onclick="bukaModalHapusFoto('formHapusFoto{{ $fotoPengiriman->id }}')">🗑️ Hapus Foto</button>
                 @else
-                    <small class="foto-locked">🔒 Foto tidak bisa dihapus setelah status berubah</small>
+                    <small class="d-foto-locked">🔒 Foto tidak bisa dihapus setelah status berubah</small>
                 @endif
             @else
                 @if($isCurrentDriver && $order->status === 'Diantar')
                     <form id="formFotoPengiriman"
-                          action="{{ route('driver.foto.pengiriman', $order->id) }}"
-                          method="POST" enctype="multipart/form-data">
+                        action="{{ route('driver.foto.pengiriman', $order->id) }}"
+                        method="POST" enctype="multipart/form-data">
                         @csrf
-                        <input type="file" name="foto" id="inputPengiriman"
-                               accept="image/*" capture="environment"
-                               style="display:none;"
-                               onchange="autoUpload(this, 'formFotoPengiriman', 'uploadingPengiriman')">
+                        <input type="file" name="foto" id="inputPengirimanKamera"
+                            accept="image/*" capture="environment" style="display:none;"
+                            onchange="autoUpload(this, 'formFotoPengiriman', 'uploadingPengiriman')">
+                        <input type="file" name="foto" id="inputPengirimanGaleri"
+                            accept="image/*" style="display:none;"
+                            onchange="autoUpload(this, 'formFotoPengiriman', 'uploadingPengiriman')">
                     </form>
-                    <button type="button" class="btn-ambil-foto"
-                            onclick="document.getElementById('inputPengiriman').click()">
-                        📷 Ambil Foto
-                    </button>
-                    <span class="foto-uploading" id="uploadingPengiriman">⏳ Mengupload foto...</span>
+                    <div class="d-foto-row">
+                        <button type="button" class="d-btn d-btn-foto" onclick="document.getElementById('inputPengirimanKamera').click()">📷 Kamera</button>
+                        <button type="button" class="d-btn d-btn-foto" onclick="document.getElementById('inputPengirimanGaleri').click()">🖼️ Galeri</button>
+                    </div>
+                    <span class="d-foto-uploading" id="uploadingPengiriman">⏳ Mengupload foto...</span>
                 @else
-                    <small class="foto-empty">Belum ada foto</small>
+                    <small class="d-foto-empty">Belum ada foto</small>
                 @endif
             @endif
         </div>
@@ -607,14 +706,14 @@
     @endphp
 
     @if($labelUpdate)
-    <div class="section-card" style="margin-top: 24px;">
-        <div class="section-title">🔄 Update Status</div>
+    <div class="d-card">
+        <div class="d-card-title">🔄 Update Status</div>
         <form id="formUpdateStatus"
               action="{{ route('driver.updateStatus', $order->id) }}"
               method="POST" style="display:none;">
             @csrf
         </form>
-        <button type="button" class="btn btn-update" style="max-width: 320px;"
+        <button type="button" class="d-btn d-btn-update"
                 onclick="bukaModalUpdate(
                     'formUpdateStatus',
                     '{{ $order->token }}',
@@ -631,17 +730,17 @@
     {{-- ========================= --}}
     {{-- RIWAYAT DRIVER            --}}
     {{-- ========================= --}}
-    <div class="section-card" style="margin-top: 24px;">
-        <div class="section-title">Riwayat Driver</div>
+    <div class="d-card">
+        <div class="d-card-title">🕓 Riwayat Driver</div>
         @if($order->driverLogs->isEmpty())
-            <div class="empty">Belum ada riwayat driver untuk pesanan ini.</div>
+            <div class="d-empty-text">Belum ada riwayat driver untuk pesanan ini.</div>
         @else
-            <div class="timeline">
+            <div class="d-timeline">
                 @foreach($order->driverLogs->sortByDesc('taken_at') as $log)
-                <div class="timeline-item">
-                    <div class="timeline-driver">🚗 {{ $log->driver->name ?? 'Driver Tidak Diketahui' }}</div>
-                    <div class="timeline-status">{{ $log->status }}</div>
-                    <div class="timeline-date">
+                <div class="d-timeline-item">
+                    <div class="d-timeline-driver">🚗 {{ $log->driver->name ?? 'Driver Tidak Diketahui' }}</div>
+                    <div class="d-timeline-status">{{ $log->status }}</div>
+                    <div class="d-timeline-date">
                         {{ \Carbon\Carbon::parse($log->taken_at)->translatedFormat('d F Y - H:i') }}
                     </div>
                 </div>
@@ -654,9 +753,9 @@
     {{-- LEPAS PESANAN             --}}
     {{-- ========================= --}}
     @if($isCurrentDriver && !in_array($order->status, ['Selesai']))
-    <div class="section-card" style="margin-top: 24px; border-left: 4px solid #ef4444;">
-        <div class="section-title" style="color: #ef4444;">⚠️ Zona Berbahaya</div>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">
+    <div class="d-card d-danger-card">
+        <div class="d-card-title">⚠️ Zona Berbahaya</div>
+        <p class="d-danger-desc">
             Melepaskan pesanan akan mengembalikan status ke tahap sebelumnya dan pesanan bisa diambil driver lain.
         </p>
         <form id="formLepasPesanan"
@@ -664,7 +763,7 @@
               method="POST" style="display:none;">
             @csrf
         </form>
-        <button type="button" class="btn btn-lepas" style="max-width: 320px;"
+        <button type="button" class="d-btn d-btn-lepas"
                 onclick="bukaModalLepas(
                     'formLepasPesanan',
                     '{{ $order->token }}',

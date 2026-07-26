@@ -14,7 +14,10 @@
     <!-- HEADER -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h1>Admin Dashboard</h1>
-        <a href="/admin/orders" class="back-btn">Lihat Semua Pesanan</a>
+        <div style="display:flex; gap:10px;">
+            <a href="{{ route('admin.promosi.index') }}" class="back-btn">Manajemen Promo</a>
+            <a href="/admin/orders" class="back-btn">Lihat Semua Pesanan</a>
+        </div>
     </div>
 
          <div class="cards">

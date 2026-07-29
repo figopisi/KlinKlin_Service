@@ -72,7 +72,7 @@ return new class extends Migration
             $table->text('alamat_laundry');
             $table->string('phone_laundry', 20)->nullable();
             $table->string('token', 20)->unique('token');
-            $table->enum('status', ['Diproses', 'Dijemput', 'Dicuci', 'Diantar', 'Selesai'])->default('Diproses');
+            $table->enum('status', ['Unconfirmed', 'Diproses', 'Dijemput', 'Dicuci', 'Diantar', 'Selesai'])->default('Unconfirmed');
             $table->string('dokumentasi_pakaian')->nullable();
             $table->integer('fee');
             $table->boolean('is_sorted')->nullable()->default(false);

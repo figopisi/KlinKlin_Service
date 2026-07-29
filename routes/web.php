@@ -39,6 +39,9 @@ Route::get('/buat-pesanan', function () {
 Route::post('/buat-pesanan', [OrderController::class, 'store'])
     ->name('buat-pesanan.store');
 
+Route::post('/buat-pesanan/draft', [OrderController::class, 'storeDraft'])
+    ->name('buat-pesanan.draft');
+
 /*
 |--------------------------------------------------------------------------
 | AUTH ADMIN

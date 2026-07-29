@@ -463,6 +463,7 @@
                 <div class="form-group">
                     <label>Status</label>
                     <select name="status">
+                        <option value="Unconfirmed"    {{ $order->status == 'Unconfirmed'    ? 'selected' : '' }}>Unconfirmed</option>
                         <option value="Diproses"        {{ $order->status == 'Diproses'        ? 'selected' : '' }}>Diproses</option>
                         <option value="Dijemput"        {{ $order->status == 'Dijemput'        ? 'selected' : '' }}>Dijemput</option>
                         <option value="Mencari Laundry" {{ $order->status == 'Mencari Laundry' ? 'selected' : '' }}>Mencari Laundry</option>

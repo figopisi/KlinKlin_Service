@@ -145,16 +145,59 @@
         });
     }
 
+    function buildPickupDatetime() {
+        var date = val('f_tanggal');
+        var time = val('f_jam');
+        if (!date || !time) { return null; }
+        return date + ' ' + time;
+    }
+
+    function buildDraftPayload() {
+        return {
+            nama: val('f_nama'),
+            phone: val('f_telepon'),
+            alamat_customer: val('f_alamat'),
+            alamat_laundry: val('f_laundry') || null,
+            phone_laundry: null,
+            is_sorted: val('f_pilah') === 'Iya',
+            note: val('f_catatan') || null,
+            tanggal_penjemputan: buildPickupDatetime(),
+            jenis_layanan: val('f_layanan') || null,
+            estimasi_jumlah_laundry: val('f_jumlah') || null,
+        };
+    }
+
+    function getCsrfToken() {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
+    function saveDraft() {
+        return fetch('/buat-pesanan/draft', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+            },
+            body: JSON.stringify(buildDraftPayload())
+        });
+    }
+
     /* ---------- Kirim via WhatsApp ---------- */
     var waBtn = document.querySelector('#orderSendWa');
     if (waBtn) {
         waBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            var text = encodeURIComponent(buildMessage(true));
-            var url = WA_NUMBER
-                ? 'https://wa.me/' + WA_NUMBER + '?text=' + text
-                : 'https://api.whatsapp.com/send?text=' + text;
-            window.open(url, '_blank', 'noopener');
+            saveDraft().catch(function () {
+                console.warn('Draft save gagal.');
+            }).finally(function () {
+                var text = encodeURIComponent(buildMessage(true));
+                var url = WA_NUMBER
+                    ? 'https://wa.me/' + WA_NUMBER + '?text=' + text
+                    : 'https://api.whatsapp.com/send?text=' + text;
+                window.open(url, '_blank', 'noopener');
+            });
         });
     }
 

@@ -26,6 +26,7 @@
             text-transform: uppercase;
         }
 
+        .status-unconfirmed { background-color: #6B7280; }
         .status-diproses { background-color: #374151; }
         .status-dijemput { background-color: #3B82F6; }
         .status-dicuci   { background-color: #8B5CF6; }
@@ -91,6 +92,7 @@
         <!-- STATUS FILTER -->
         <select name="status" style="padding:10px; border-radius:10px;">
             <option value="">Semua Status</option>
+            <option value="Unconfirmed" {{ request('status') == 'Unconfirmed' ? 'selected' : '' }}>Unconfirmed</option>
             <option value="Diproses" {{ request('status') == 'Diproses' ? 'selected' : '' }}>Diproses</option>
             <option value="Dijemput" {{ request('status') == 'Dijemput' ? 'selected' : '' }}>Dijemput</option>
             <option value="Dicuci" {{ request('status') == 'Dicuci' ? 'selected' : '' }}>Dicuci</option>
@@ -121,6 +123,7 @@
 
                 @php
                     $statusClass = match($order->status) {
+                        'Unconfirmed' => 'status-unconfirmed',
                         'Diproses' => 'status-diproses',
                         'Dijemput' => 'status-dijemput',
                         'Dicuci'   => 'status-dicuci',

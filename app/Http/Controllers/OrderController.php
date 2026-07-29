@@ -40,45 +40,67 @@ public function store(Request $request)
         'fee' => 'required|integer|min:0',
         'is_sorted' => 'nullable|boolean',
         'note' => 'nullable|string',
-        'status' => 'nullable|in:Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
-        'dokumentasi_pakaian' => 'nullable|url|max:500',
-        'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // input admin: YYYY-MM-DD HH:MM
-        'jenis_layanan' => 'nullable|string',
-        'estimasi_jumlah_laundry' => 'nullable|string',
-    ]);
+            'status' => 'nullable|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
+            'dokumentasi_pakaian' => 'nullable|url|max:500',
+            'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // input admin: YYYY-MM-DD HH:MM
+            'jenis_layanan' => 'nullable|string',
+            'estimasi_jumlah_laundry' => 'nullable|string',
+        ]);
 
-    // default value
-    $data['status'] = $data['status'] ?? 'Diproses';
-    $data['is_sorted'] = $data['is_sorted'] ?? 0;
+        // default value
+        $data['status'] = $data['status'] ?? 'Diproses';
+        $data['is_sorted'] = $data['is_sorted'] ?? 0;
 
-    // 🔥 LOGIC: kalau tidak pakai pemilahan → hapus dokumentasi
-    if (!$data['is_sorted']) {
-        $data['dokumentasi_pakaian'] = null;
+        // 🔥 LOGIC: kalau tidak pakai pemilahan → hapus dokumentasi
+        if (!$data['is_sorted']) {
+            $data['dokumentasi_pakaian'] = null;
+        }
+
+        $data['token'] = $this->generateUniqueToken();
+
+        // simpan
+        Order::create($data);
+
+        return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $data['token']);
     }
 
-    // 🔥 GENERATE TOKEN UNIQUE
-    do {
-        $random = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 6));
-        $token = 'LND-' . $random;
-    } while (Order::where('token', $token)->exists());
-
-    $data['token'] = $token;
-
-    // simpan
-    Order::create($data);
-
-    return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $token);
-}
-
-    // ================= ADMIN =================
-
-     // ================= DASHBOARD ADMIN =================
-    public function adminDashboard()
+    public function storeDraft(Request $request)
     {
-        $totalPesanan = Order::count();
-        $totalPemasukan = Order::where('status', 'Selesai')->sum('fee');
+        $data = $request->validate([
+            'nama' => 'required|string|max:100',
+            'phone' => 'required|string|max:20',
+            'alamat_customer' => 'required|string',
+            'alamat_laundry' => 'nullable|string',
+            'phone_laundry' => 'nullable|string|max:20',
+            'is_sorted' => 'nullable|boolean',
+            'note' => 'nullable|string',
+            'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i',
+            'jenis_layanan' => 'nullable|string',
+            'estimasi_jumlah_laundry' => 'nullable|string',
+        ]);
 
-        return view('admin.adminindex', compact('totalPesanan', 'totalPemasukan'));
+        $data['status'] = 'Unconfirmed';
+        $data['fee'] = 0;
+        $data['is_sorted'] = $data['is_sorted'] ?? 0;
+        $data['dokumentasi_pakaian'] = null;
+        $data['token'] = $this->generateUniqueToken();
+
+        Order::create($data);
+
+        return response()->json([
+            'message' => 'Draft order saved',
+            'token' => $data['token'],
+        ], 201);
+    }
+
+    private function generateUniqueToken()
+    {
+        do {
+            $random = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 6));
+            $token = 'LND-' . $random;
+        } while (Order::where('token', $token)->exists());
+
+        return $token;
     }
 
     public function adminOrders(Request $request)
@@ -124,7 +146,7 @@ public function store(Request $request)
             'alamat_customer'         => 'required|string',
             'alamat_laundry'          => 'required|string',
             'phone_laundry'           => 'nullable|string|max:20',
-            'status'                  => 'required|in:Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
+            'status'                  => 'required|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
             'fee'                     => 'required|numeric',
             'note'                    => 'nullable|string',
             'dokumentasi_pakaian'     => 'nullable|string',

@@ -8,6 +8,13 @@ use App\Models\Order;
 class OrderController extends Controller
 {
     // ================= PUBLIC =================
+    public function adminDashboard()
+    {
+        $totalPesanan = Order::count();
+        $totalPemasukan = Order::sum('fee');
+
+        return view('admin.adminindex', compact('totalPesanan', 'totalPemasukan'));
+    }
 
     public function index()
     {
@@ -32,37 +39,35 @@ class OrderController extends Controller
 public function store(Request $request)
 {
     $data = $request->validate([
-        'nama' => 'required|string|max:100',
-        'phone' => 'required|string|max:20',
-        'alamat_customer' => 'required|string',
-        'alamat_laundry' => 'required|string',
-        'phone_laundry' => 'nullable|string|max:20',
-        'fee' => 'required|integer|min:0',
-        'is_sorted' => 'nullable|boolean',
-        'note' => 'nullable|string',
-            'status' => 'nullable|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
-            'dokumentasi_pakaian' => 'nullable|url|max:500',
-            'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i', // input admin: YYYY-MM-DD HH:MM
-            'jenis_layanan' => 'nullable|string',
-            'estimasi_jumlah_laundry' => 'nullable|string',
-        ]);
+        'nama'                    => 'required|string|max:100',
+        'phone'                   => 'required|string|max:20',
+        'alamat_customer'         => 'required|string',
+        'alamat_laundry'          => 'nullable|string',
+        'phone_laundry'           => 'nullable|string|max:20',
+        'fee'                     => 'required|integer|min:0',
+        'is_sorted'               => 'nullable|boolean',
+        'note'                    => 'nullable|string',
+        'status'                  => 'nullable|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
+        'dokumentasi_pakaian'     => 'nullable|url|max:500',
+        'tanggal_penjemputan'     => 'required|date_format:Y-m-d H:i',
+        'jenis_layanan'           => 'required|string',
+        'estimasi_jumlah_laundry' => 'nullable|string',
+    ]);
 
-        // default value
-        $data['status'] = $data['status'] ?? 'Diproses';
-        $data['is_sorted'] = $data['is_sorted'] ?? 0;
+    $data['status'] = $data['status'] ?? 'Diproses';
+    $data['is_sorted'] = $data['is_sorted'] ?? 0;
+    $data['alamat_laundry'] = $data['alamat_laundry'] ?? '-';
 
-        // 🔥 LOGIC: kalau tidak pakai pemilahan → hapus dokumentasi
-        if (!$data['is_sorted']) {
-            $data['dokumentasi_pakaian'] = null;
-        }
-
-        $data['token'] = $this->generateUniqueToken();
-
-        // simpan
-        Order::create($data);
-
-        return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $data['token']);
+    if (!$data['is_sorted']) {
+        $data['dokumentasi_pakaian'] = null;
     }
+
+    $data['token'] = $this->generateUniqueToken();
+
+    Order::create($data);
+
+    return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $data['token']);
+}
 
     public function storeDraft(Request $request)
     {
@@ -84,6 +89,7 @@ public function store(Request $request)
         $data['is_sorted'] = $data['is_sorted'] ?? 0;
         $data['dokumentasi_pakaian'] = null;
         $data['token'] = $this->generateUniqueToken();
+        $data['alamat_laundry'] = $data['alamat_laundry'] ?? '-'; 
 
         Order::create($data);
 

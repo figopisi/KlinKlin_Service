@@ -10,6 +10,36 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="asset/css/landingpage.css">
+<style>
+    /* tanda wajib isi */
+    .of-required { color:#e53935; margin-left:2px; }
+    .of-field.of-error input,
+    .of-field.of-error select,
+    .of-field.of-error textarea {
+        border-color:#e53935 !important;
+        box-shadow:0 0 0 2px rgba(229,57,53,0.15);
+    }
+    .of-error-msg {
+        color:#e53935;
+        font-size:12px;
+        margin-top:4px;
+        display:none;
+    }
+    .of-field.of-error .of-error-msg { display:block; }
+
+    /* banner notifikasi global */
+    #orderNotice {
+        display:none;
+        background:#fdecea;
+        border:1px solid #e53935;
+        color:#b71c1c;
+        padding:10px 14px;
+        border-radius:8px;
+        font-size:14px;
+        margin-bottom:14px;
+    }
+    #orderNotice.show { display:block; }
+</style>
 </head>
 
 <body>
@@ -41,37 +71,45 @@
 
                 <h3 class="order-card-sub" data-i18n-html="order_isi">Isi <strong>Format Pesanan</strong></h3>
 
-                <form id="orderForm" class="order-form" autocomplete="off">
+                <div id="orderNotice"></div>
+
+                <form id="orderForm" class="order-form" autocomplete="off" novalidate>
+
                     <div class="of-row">
-                        <div class="of-field">
-                            <label for="f_nama" data-i18n="form_nama_label">Nama lengkap</label>
+                        <div class="of-field" data-required="true">
+                            <label for="f_nama" data-i18n="form_nama_label">Nama lengkap<span class="of-required">*</span></label>
                             <input id="f_nama" type="text" placeholder="Nama kamu" data-i18n-placeholder="form_nama_ph">
+                            <span class="of-error-msg">Nama wajib diisi.</span>
                         </div>
-                        <div class="of-field">
-                            <label for="f_telepon" data-i18n="form_telepon_label">Nomor telepon aktif</label>
+                        <div class="of-field" data-required="true">
+                            <label for="f_telepon" data-i18n="form_telepon_label">Nomor telepon aktif<span class="of-required">*</span></label>
                             <input id="f_telepon" type="tel" placeholder="08xxxxxxxxxx" data-i18n-placeholder="form_telepon_ph">
+                            <span class="of-error-msg">Nomor telepon wajib diisi.</span>
                         </div>
                     </div>
 
-                    <div class="of-field">
-                        <label for="f_alamat" data-i18n="form_alamat_label">Alamat customer</label>
+                    <div class="of-field" data-required="true">
+                        <label for="f_alamat" data-i18n="form_alamat_label">Alamat customer<span class="of-required">*</span></label>
                         <textarea id="f_alamat" rows="2" placeholder="Alamat penjemputan cucian" data-i18n-placeholder="form_alamat_ph"></textarea>
+                        <span class="of-error-msg">Alamat customer wajib diisi.</span>
                     </div>
 
                     <div class="of-row">
-                        <div class="of-field">
-                            <label for="f_tanggal" data-i18n="form_tanggal_label">Tanggal Penjemputan</label>
+                        <div class="of-field" data-required="true">
+                            <label for="f_tanggal" data-i18n="form_tanggal_label">Tanggal Penjemputan<span class="of-required">*</span></label>
                             <input id="f_tanggal" type="date">
+                            <span class="of-error-msg">Tanggal penjemputan wajib diisi.</span>
                         </div>
-                        <div class="of-field">
-                            <label for="f_jam" data-i18n="form_jam_label">Jam Penjemputan</label>
+                        <div class="of-field" data-required="true">
+                            <label for="f_jam" data-i18n="form_jam_label">Jam Penjemputan<span class="of-required">*</span></label>
                             <input id="f_jam" type="time">
+                            <span class="of-error-msg">Jam penjemputan wajib diisi.</span>
                         </div>
                     </div>
 
                     <div class="of-row">
-                        <div class="of-field">
-                            <label for="f_layanan" data-i18n="form_layanan_label">Jenis Layanan</label>
+                        <div class="of-field" data-required="true">
+                            <label for="f_layanan" data-i18n="form_layanan_label">Jenis Layanan<span class="of-required">*</span></label>
                             <select id="f_layanan">
                                 <option value="" data-i18n="form_layanan_opt0">Pilih layanan</option>
                                 <option data-i18n="form_layanan_opt1">Cuci + Setrika</option>
@@ -80,9 +118,13 @@
                                 <option data-i18n="form_layanan_opt4">Cuci Sepatu</option>
                                 <option data-i18n="form_layanan_opt5">Bed Cover / Selimut</option>
                             </select>
+                            <span class="of-error-msg">Jenis layanan wajib dipilih.</span>
                         </div>
                         <div class="of-field">
-                            <label for="f_jumlah" data-i18n="form_jumlah_label">Estimasi Jumlah (kg/pcs)</label>
+                            <label for="f_jumlah" data-i18n="form_jumlah_label">
+                                Estimasi Jumlah (kg/pcs)
+                                <span class="of-opt" data-i18n="form_opsional">(opsional)</span>
+                            </label>
                             <input id="f_jumlah" type="text" placeholder="mis. 5 kg" data-i18n-placeholder="form_jumlah_ph">
                         </div>
                     </div>
@@ -96,21 +138,23 @@
                     </div>
 
                     <div class="of-row">
-                        <div class="of-field">
-                            <label for="f_pilah" data-i18n="form_pilah_label">Jasa pilah</label>
+                        <div class="of-field" data-required="true">
+                            <label for="f_pilah" data-i18n="form_pilah_label">Jasa pilah<span class="of-required">*</span></label>
                             <select id="f_pilah">
                                 <option value="" data-i18n="form_pilih">Pilih</option>
                                 <option data-i18n="form_pilah_opt1">Iya</option>
                                 <option data-i18n="form_pilah_opt2">Tidak</option>
                             </select>
+                            <span class="of-error-msg">Silakan pilih jasa pilah.</span>
                         </div>
-                        <div class="of-field">
-                            <label for="f_bayar" data-i18n="form_bayar_label">Metode bayar</label>
+                        <div class="of-field" data-required="true">
+                            <label for="f_bayar" data-i18n="form_bayar_label">Metode bayar<span class="of-required">*</span></label>
                             <select id="f_bayar">
                                 <option value="" data-i18n="form_pilih">Pilih</option>
                                 <option data-i18n="form_bayar_opt1">Cash di tempat</option>
                                 <option data-i18n="form_bayar_opt2">Transfer</option>
                             </select>
+                            <span class="of-error-msg">Silakan pilih metode bayar.</span>
                         </div>
                     </div>
 

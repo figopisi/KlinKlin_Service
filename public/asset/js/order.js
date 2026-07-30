@@ -1,14 +1,13 @@
 /* ============================================================
    KlinKlin — Halaman Order (Pesan)
    - Form dinamis: isi field -> preview pesan langsung update
+   - Validasi wajib-isi sebelum kirim (WA/IG)
    - Salin format / kirim langsung ke WhatsApp
    - Label & greeting pesan ikut bahasa UI aktif (I18N), via I18N.id / I18N.en
    ============================================================ */
 (function () {
     'use strict';
 
-    /* Nomor WhatsApp tujuan (format internasional tanpa "+", mis. 6281234567890).
-       Kosongkan -> WhatsApp terbuka tanpa kontak terpilih. GANTI dengan nomor asli KlinKlin. */
     var WA_NUMBER = '';
     var IG_URL    = 'https://instagram.com/klinklin.service';
 
@@ -16,20 +15,14 @@
     if (!form) return;
 
     var preview = document.querySelector('#orderPreview');
+    var notice = document.querySelector('#orderNotice');
     var emptyMark = '—';
 
-    /* ---------- Bahasa aktif ----------
-       Sumber kebenaran: atribut lang pada <html>, mis. <html lang="en">.
-       Default ke 'id' kalau tidak ada / tidak dikenali.
-       Kalau switcher bahasa kamu TIDAK mengubah document.documentElement.lang,
-       sesuaikan fungsi getLang() di bawah ini. */
     function getLang() {
         var attr = (document.documentElement.lang || '').toLowerCase();
         return attr.indexOf('en') === 0 ? 'en' : 'id';
     }
 
-    /* Fallback default kalau objek I18N belum termuat / key belum ada,
-       supaya form tetap berfungsi walau i18n belum lengkap. */
     var FALLBACK = {
         id: {
             msg_greeting:      'Halo KlinKlin! 👋 Saya mau pesan laundry:',
@@ -43,7 +36,9 @@
             msg_label_laundry: 'Alamat laundry Pilihan',
             msg_label_pilah:   'Jasa pilah',
             msg_label_bayar:   'Metode bayar',
-            msg_label_catatan: 'Catatan Khusus'
+            msg_label_catatan: 'Catatan Khusus',
+            notice_incomplete: 'Mohon lengkapi field berwarna merah sebelum mengirim pesanan.',
+            notice_save_failed: 'Pesanan belum tersimpan di sistem kami, tapi pesan tetap bisa dikirim manual. Mohon hubungi CS jika tidak ada balasan.'
         },
         en: {
             msg_greeting:      'Hi KlinKlin! 👋 I would like to order laundry service:',
@@ -57,18 +52,18 @@
             msg_label_laundry: 'Preferred Laundry Address',
             msg_label_pilah:   'Sorting Service',
             msg_label_bayar:   'Payment Method',
-            msg_label_catatan: 'Special Notes'
+            msg_label_catatan: 'Special Notes',
+            notice_incomplete: 'Please fill in all required (*) fields before sending your order.',
+            notice_save_failed: 'Your order was not saved on our system, but you can still send the message manually. Please contact us if there is no reply.'
         }
     };
 
-    /* Ambil teks dari I18N global kalau ada, jatuh ke FALLBACK kalau tidak. */
     function t(key) {
         var lang = getLang();
         var dict = (typeof I18N !== 'undefined' && I18N[lang]) ? I18N[lang] : FALLBACK[lang];
         return (dict && dict[key]) || FALLBACK[lang][key] || FALLBACK.id[key] || '';
     }
 
-    /* Urutan baris pesan — label diambil dinamis lewat t() sesuai bahasa aktif */
     function getFields() {
         return [
             { id: 'f_nama',     label: t('msg_label_nama') },
@@ -104,14 +99,70 @@
         if (preview) { preview.textContent = buildMessage(false); }
     }
 
-    /* update live setiap kali user mengetik / memilih */
     form.addEventListener('input', refresh);
     form.addEventListener('change', refresh);
     refresh();
 
-    /* update live setiap kali bahasa UI diganti (lang attribute pada <html> berubah) */
     var langObserver = new MutationObserver(refresh);
     langObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+
+    /* ---------- Validasi wajib-isi ---------- */
+    function showNotice(text) {
+        if (!notice) return;
+        notice.textContent = text;
+        notice.classList.add('show');
+    }
+
+    function hideNotice() {
+        if (!notice) return;
+        notice.classList.remove('show');
+        notice.textContent = '';
+    }
+
+    // Kembalikan true kalau semua field wajib terisi. Field kosong ditandai merah.
+    function validateRequired() {
+        var ok = true;
+        var firstInvalid = null;
+
+        form.querySelectorAll('.of-field[data-required="true"]').forEach(function (field) {
+            var input = field.querySelector('input, select, textarea');
+            var filled = input && input.value && input.value.trim() !== '';
+
+            if (!filled) {
+                ok = false;
+                field.classList.add('of-error');
+                if (!firstInvalid) firstInvalid = input;
+            } else {
+                field.classList.remove('of-error');
+            }
+        });
+
+        if (!ok) {
+            showNotice(t('notice_incomplete'));
+            if (firstInvalid) {
+                firstInvalid.focus();
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            hideNotice();
+        }
+
+        return ok;
+    }
+
+    // hapus tanda error begitu user mulai mengisi field itu
+    form.addEventListener('input', function (e) {
+        var field = e.target.closest('.of-field[data-required="true"]');
+        if (field && e.target.value.trim() !== '') {
+            field.classList.remove('of-error');
+        }
+    });
+    form.addEventListener('change', function (e) {
+        var field = e.target.closest('.of-field[data-required="true"]');
+        if (field && e.target.value.trim() !== '') {
+            field.classList.remove('of-error');
+        }
+    });
 
     /* ---------- Salin ---------- */
     function fallbackCopy(text) {
@@ -172,6 +223,7 @@
         return meta ? meta.getAttribute('content') : '';
     }
 
+    // Sekarang mengecek response.ok secara eksplisit, bukan cuma nangkep network error.
     function saveDraft() {
         return fetch('/buat-pesanan/draft', {
             method: 'POST',
@@ -181,7 +233,23 @@
                 'X-CSRF-TOKEN': getCsrfToken(),
             },
             body: JSON.stringify(buildDraftPayload())
+        }).then(function (res) {
+            if (!res.ok) {
+                return res.json().catch(function () { return null; }).then(function (body) {
+                    console.error('Gagal menyimpan draft pesanan:', res.status, body);
+                    throw new Error('draft_save_failed');
+                });
+            }
+            return res.json();
         });
+    }
+
+    function proceedToWa() {
+        var text = encodeURIComponent(buildMessage(true));
+        var url = WA_NUMBER
+            ? 'https://wa.me/' + WA_NUMBER + '?text=' + text
+            : 'https://api.whatsapp.com/send?text=' + text;
+        window.open(url, '_blank', 'noopener');
     }
 
     /* ---------- Kirim via WhatsApp ---------- */
@@ -189,15 +257,26 @@
     if (waBtn) {
         waBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            saveDraft().catch(function () {
-                console.warn('Draft save gagal.');
-            }).finally(function () {
-                var text = encodeURIComponent(buildMessage(true));
-                var url = WA_NUMBER
-                    ? 'https://wa.me/' + WA_NUMBER + '?text=' + text
-                    : 'https://api.whatsapp.com/send?text=' + text;
-                window.open(url, '_blank', 'noopener');
-            });
+
+            if (!validateRequired()) {
+                return; // blok total, jangan buka WA kalau field wajib belum lengkap
+            }
+
+            waBtn.classList.add('is-loading');
+            saveDraft()
+                .then(function () {
+                    hideNotice();
+                    proceedToWa();
+                })
+                .catch(function () {
+                    // draft gagal tersimpan meski sudah lolos validasi (mis. server error) —
+                    // beri tahu user secara jujur, jangan diam-diam lanjut seperti sebelumnya
+                    showNotice(t('notice_save_failed'));
+                    proceedToWa();
+                })
+                .finally(function () {
+                    waBtn.classList.remove('is-loading');
+                });
         });
     }
 
@@ -206,11 +285,25 @@
     if (igBtn) {
         igBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            var text = buildMessage(true);
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).catch(function () {});
-            } else { fallbackCopy(text); }
-            window.open(IG_URL, '_blank', 'noopener');
+
+            if (!validateRequired()) {
+                return;
+            }
+
+            saveDraft()
+                .then(function () {
+                    hideNotice();
+                })
+                .catch(function () {
+                    showNotice(t('notice_save_failed'));
+                })
+                .finally(function () {
+                    var text = buildMessage(true);
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).catch(function () {});
+                    } else { fallbackCopy(text); }
+                    window.open(IG_URL, '_blank', 'noopener');
+                });
         });
     }
 })();

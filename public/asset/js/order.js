@@ -4,6 +4,9 @@
    - Validasi wajib-isi sebelum kirim (WA/IG)
    - Salin format / kirim langsung ke WhatsApp
    - Label & greeting pesan ikut bahasa UI aktif (I18N), via I18N.id / I18N.en
+   - Tipe Penjemputan: jika "Jemput Saja" dipilih, Alamat Laundry jadi wajib.
+     Tipe lain ("Antar Jemput (PP)" / "Antar Saja") -> flow lama, alamat
+     laundry tetap opsional.
    ============================================================ */
 (function () {
     'use strict';
@@ -11,12 +14,18 @@
     var WA_NUMBER = '';
     var IG_URL    = 'https://instagram.com/klinklin.service';
 
+    // Nilai tipe penjemputan yang mewajibkan alamat laundry diisi
+    var TIPE_WAJIB_LAUNDRY = 'Jemput Saja';
+
     var form = document.querySelector('#orderForm');
     if (!form) return;
 
     var preview = document.querySelector('#orderPreview');
     var notice = document.querySelector('#orderNotice');
     var emptyMark = '—';
+
+    var tipeSelect = document.getElementById('f_tipe_antar_jemput');
+    var laundryField = document.getElementById('of_field_laundry');
 
     function getLang() {
         var attr = (document.documentElement.lang || '').toLowerCase();
@@ -31,6 +40,7 @@
             msg_label_alamat:  'Alamat customer',
             msg_label_tanggal: 'Tanggal Penjemputan',
             msg_label_jam:     'Jam Penjemputan',
+            msg_label_tipe:    'Tipe Penjemputan',
             msg_label_layanan: 'Jenis Layanan',
             msg_label_jumlah:  'Estimasi Jumlah Laundry (kg/pcs)',
             msg_label_laundry: 'Alamat laundry Pilihan',
@@ -47,6 +57,7 @@
             msg_label_alamat:  'Customer address',
             msg_label_tanggal: 'Pickup Date',
             msg_label_jam:     'Pickup Time',
+            msg_label_tipe:    'Pickup Type',
             msg_label_layanan: 'Service Type',
             msg_label_jumlah:  'Estimated Laundry Amount (kg/pcs)',
             msg_label_laundry: 'Preferred Laundry Address',
@@ -71,6 +82,7 @@
             { id: 'f_alamat',   label: t('msg_label_alamat') },
             { id: 'f_tanggal',  label: t('msg_label_tanggal') },
             { id: 'f_jam',      label: t('msg_label_jam') },
+            { id: 'f_tipe_antar_jemput', label: t('msg_label_tipe') },
             { id: 'f_layanan',  label: t('msg_label_layanan') },
             { id: 'f_jumlah',   label: t('msg_label_jumlah') },
             { id: 'f_laundry',  label: t('msg_label_laundry') },
@@ -99,6 +111,29 @@
         if (preview) { preview.textContent = buildMessage(false); }
     }
 
+    /* ---------- Tipe Penjemputan -> alamat laundry wajib/tidak ---------- */
+    function isJemputSaja() {
+        return val('f_tipe_antar_jemput') === TIPE_WAJIB_LAUNDRY;
+    }
+
+    function syncLaundryRequirement() {
+        if (!laundryField) return;
+
+        if (isJemputSaja()) {
+            laundryField.dataset.required = 'true';
+            laundryField.classList.add('is-dynamic-required');
+        } else {
+            delete laundryField.dataset.required;
+            laundryField.classList.remove('is-dynamic-required');
+            laundryField.classList.remove('of-error'); // bersihkan error lama kalau tipe diganti
+        }
+    }
+
+    if (tipeSelect) {
+        tipeSelect.addEventListener('change', syncLaundryRequirement);
+    }
+    syncLaundryRequirement(); // inisialisasi state awal saat halaman dimuat
+
     form.addEventListener('input', refresh);
     form.addEventListener('change', refresh);
     refresh();
@@ -119,10 +154,16 @@
         notice.textContent = '';
     }
 
-    // Kembalikan true kalau semua field wajib terisi. Field kosong ditandai merah.
+    // Kembalikan true kalau semua field wajib terisi (termasuk field yang
+    // wajib secara dinamis, mis. alamat laundry saat tipe = "Jemput Saja").
+    // Field kosong ditandai merah.
     function validateRequired() {
         var ok = true;
         var firstInvalid = null;
+
+        // sinkronkan dulu status wajib alamat laundry sebelum validasi jalan,
+        // jaga-jaga kalau ada perubahan yang belum ke-trigger event change
+        syncLaundryRequirement();
 
         form.querySelectorAll('.of-field[data-required="true"]').forEach(function (field) {
             var input = field.querySelector('input, select, textarea');
@@ -215,6 +256,7 @@
             tanggal_penjemputan: buildPickupDatetime(),
             jenis_layanan: val('f_layanan') || null,
             estimasi_jumlah_laundry: val('f_jumlah') || null,
+            tipe_antar_jemput: val('f_tipe_antar_jemput') || null,
         };
     }
 

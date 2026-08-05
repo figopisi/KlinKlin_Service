@@ -45,29 +45,31 @@ class DriverController extends Controller
 
     // ================= DETAIL PESANAN (DRIVER) =================
 
-   public function detail($id)
-{
-    $order = Order::with(['driverLogs.driver', 'currentDriver', 'photos'])
-    ->findOrFail($id); // ambil dulu tanpa filter driver
+    public function detail($id)
+    {
+        $order = Order::with(['driverLogs.driver', 'currentDriver', 'photos'])
+            ->findOrFail($id); // ambil dulu tanpa filter driver
 
-    $driverId = session('driver_id');
+        $driverId = session('driver_id');
 
-    $isPemilik         = $order->current_driver_id == $driverId;
-    $adaDiLog          = $order->driverLogs->contains('driver_id', $driverId);
-    // ✅ kondisi baru: pesanan tersedia (belum diambil siapapun)
-    $isPesananTersedia = is_null($order->current_driver_id)
-                        && in_array($order->status, ['Diproses', 'Dicuci']);
+        $isPemilik         = $order->current_driver_id == $driverId;
+        $adaDiLog          = $order->driverLogs->contains('driver_id', $driverId);
+        // kondisi: pesanan tersedia (belum diambil siapapun)
+        $isPesananTersedia = is_null($order->current_driver_id)
+                            && in_array($order->status, ['Diproses', 'Dicuci']);
 
-    // Tolak jika tidak punya relasi apapun ke pesanan ini
-    if (!$isPemilik && !$adaDiLog && !$isPesananTersedia) {
-        abort(403, 'Kamu tidak punya akses ke pesanan ini.');
+        // Tolak jika tidak punya relasi apapun ke pesanan ini
+        if (!$isPemilik && !$adaDiLog && !$isPesananTersedia) {
+            abort(403, 'Kamu tidak punya akses ke pesanan ini.');
+        }
+
+        // Boleh edit field detail (alamat laundry dkk) hanya jika pemilik aktif
+        // DAN status Dijemput / Mencari Laundry. Field tipe_antar_jemput
+        // TIDAK pernah bisa diedit driver — murni ditentukan saat order dibuat.
+        $bisaEdit = $isPemilik && in_array($order->status, ['Dijemput', 'Mencari Laundry']);
+
+        return view('driver.detailPesanan', compact('order', 'bisaEdit'));
     }
-
-    // Boleh edit hanya jika pemilik aktif DAN status Dijemput
-    $bisaEdit = $isPemilik && in_array($order->status, ['Dijemput', 'Mencari Laundry']);
-
-    return view('driver.detailPesanan', compact('order', 'bisaEdit'));
-}
 
     // ================= UPDATE OLEH DRIVER (terbatas) =================
 
@@ -87,12 +89,14 @@ class DriverController extends Controller
                 ->with('error', 'Kamu bukan driver aktif pesanan ini.');
         }
 
-        // Guard 2: status harus Dijemput
-        if ($order->status !== 'Dijemput' && $order->status !== 'Mencari_Laundry') {
+        // Guard 2: status harus Dijemput atau Mencari Laundry
+        if (!in_array($order->status, ['Dijemput', 'Mencari Laundry'])) {
             return redirect()->route('driver.pesanan.detail', $id)
-                ->with('error', 'Detail hanya bisa diubah saat status pesanan Dijemput.');
+                ->with('error', 'Detail hanya bisa diubah saat status pesanan Dijemput atau Mencari Laundry.');
         }
 
+        // Catatan: tipe_antar_jemput SENGAJA tidak divalidasi/diterima di sini
+        // karena driver tidak boleh mengubah field ini (read-only).
         $data = $request->validate([
             'alamat_laundry'          => 'required|string',
             'phone_laundry'           => 'nullable|string|max:20',
@@ -122,14 +126,39 @@ class DriverController extends Controller
             return back()->with('error', 'Pesanan tidak bisa diambil');
         }
 
-        $statusBaru = match ($order->status) {
-            'Diproses' => 'Dijemput',
-            'Dicuci'   => 'Diantar',
-            default    => null,
-        };
-
-        if (!$statusBaru) {
-            return back()->with('error', 'Status tidak valid');
+        // ✅ FIX BUG: sebelumnya cabang ini hanya menebak alur dari status
+        // mentah ('Diproses' vs selain itu), tanpa mengecek tipe_antar_jemput
+        // sama sekali. Kalau ada order 'Jemput Saja' yang (karena bug lain,
+        // misalnya admin salah pilih status saat konfirmasi draft) nyasar
+        // berstatus 'Diproses', maka driver yang mengambilnya akan diarahkan
+        // ke status 'Dijemput' — padahal tipe 'Jemput Saja' seharusnya TIDAK
+        // PERNAH melalui tahap Dijemput/Mencari Laundry sama sekali, karena
+        // driver untuk tipe ini hanya bertugas mengambil dari laundry lalu
+        // mengantar ke customer.
+        //
+        // Sebagai lapisan pertahanan kedua (defense-in-depth) selain fix di
+        // OrderController@update, di sini kita cek tipe_antar_jemput secara
+        // eksplisit, bukan cuma menebak dari status. Kalau ternyata ada
+        // order 'Jemput Saja' yang statusnya 'Diproses' (data lama/nyasar),
+        // order tersebut TIDAK dianggap valid untuk alur 'Diproses', dan
+        // diarahkan sesuai aturan tipe 'Jemput Saja' (masuk ke Dicuci/Diantar
+        // berdasarkan foto nota), bukan ke Dijemput.
+        if ($order->tipe_antar_jemput === 'Jemput Saja') {
+            // Berlaku untuk 'Jemput Saja': driver bergabung mulai tahap
+            // Dicuci (ambil dari laundry) sampai Diantar (antar ke customer).
+            $punyaNota = $order->photos()->where('type', 'nota')->exists();
+            $statusBaru = $punyaNota ? 'Diantar' : 'Dicuci';
+        } elseif ($order->status === 'Diproses') {
+            // Berlaku untuk tipe 'Antar Jemput (PP)' dan 'Antar Saja'
+            $statusBaru = 'Dijemput';
+        } else {
+            // $order->status === 'Dicuci', tipe 'Antar Jemput (PP)'
+            // Order bisa berada di status Dicuci karena proses cuci yang
+            // sudah selesai (nota sudah ada dari tahap Mencari Laundry
+            // sebelumnya) -> begitu diambil driver, langsung lanjut ke
+            // Diantar.
+            $punyaNota = $order->photos()->where('type', 'nota')->exists();
+            $statusBaru = $punyaNota ? 'Diantar' : 'Dicuci';
         }
 
         OrderDriverLog::create([
@@ -149,89 +178,128 @@ class DriverController extends Controller
 
     // ================= UPDATE STATUS =================
 
-public function updateStatus($id)
-{
-    $order = Order::findOrFail($id);
+    public function updateStatus($id)
+    {
+        $order = Order::findOrFail($id);
 
-    if ($order->current_driver_id != session('driver_id')) {
-        return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
-    }
-
-    // Cek syarat foto sebelum boleh pindah status
-    if ($order->status === 'Dijemput') {
-        $punya = $order->photos()->where('type', 'pengambilan')->exists();
-        if (!$punya) {
-            return back()->with('error', 'Upload bukti pengambilan baju terlebih dahulu');
+        if ($order->current_driver_id != session('driver_id')) {
+            return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
         }
-    }
 
-    if ($order->status === 'Mencari Laundry') {
-        $punya = $order->photos()->where('type', 'nota')->exists();
-        if (!$punya) {
-            return back()->with('error', 'Upload bukti nota laundry terlebih dahulu');
+        // Cek syarat foto sebelum boleh pindah status.
+        // Berlaku sama untuk semua tipe_antar_jemput karena hanya dicek
+        // saat status yang relevan benar-benar tercapai (tahap yang
+        // dilewati untuk tipe tertentu tidak akan pernah dicek di sini).
+        if ($order->status === 'Dijemput') {
+            $punya = $order->photos()->where('type', 'pengambilan')->exists();
+            if (!$punya) {
+                return back()->with('error', 'Upload bukti pengambilan baju terlebih dahulu');
+            }
         }
-    }
 
-    if ($order->status === 'Diantar') {
-        $punya = $order->photos()->where('type', 'pengiriman')->exists();
-        if (!$punya) {
-            return back()->with('error', 'Upload bukti pengiriman terlebih dahulu');
+        if ($order->status === 'Mencari Laundry') {
+            $punya = $order->photos()->where('type', 'nota')->exists();
+            if (!$punya) {
+                return back()->with('error', 'Upload bukti nota laundry terlebih dahulu');
+            }
         }
+
+        if ($order->status === 'Dicuci') {
+            // Hanya relevan untuk tipe 'Jemput Saja' (driver baru gabung di
+            // tahap ini dan belum punya foto nota).
+            $punya = $order->photos()->where('type', 'nota')->exists();
+            if (!$punya) {
+                return back()->with('error', 'Upload bukti nota (foto di laundry) terlebih dahulu');
+            }
+        }
+
+        if ($order->status === 'Diantar') {
+            $punya = $order->photos()->where('type', 'pengiriman')->exists();
+            if (!$punya) {
+                return back()->with('error', 'Upload bukti pengiriman terlebih dahulu');
+            }
+        }
+
+        // Alur transisi status bercabang berdasarkan tipe_antar_jemput.
+        $transisi = match ($order->tipe_antar_jemput) {
+            'Antar Saja' => [
+                'Diproses'        => 'Dijemput',
+                'Dijemput'        => 'Mencari Laundry',
+                // Selesai begitu baju sudah diturunkan & tercatat (nota) di laundry
+                'Mencari Laundry' => 'Selesai',
+            ],
+            'Jemput Saja' => [
+                // Order sudah dibuat langsung berstatus Dicuci
+                'Dicuci'  => 'Diantar',
+                'Diantar' => 'Selesai',
+            ],
+            default => [ // 'Antar Jemput (PP)'
+                'Diproses'        => 'Dijemput',
+                'Dijemput'        => 'Mencari Laundry',
+                'Mencari Laundry' => 'Dicuci',
+                'Dicuci'          => 'Diantar',
+                'Diantar'         => 'Selesai',
+            ],
+        };
+
+        $statusBaru = $transisi[$order->status] ?? null;
+
+        if (!$statusBaru) {
+            return back()->with('error', 'Status tidak bisa diubah');
+        }
+
+        OrderDriverLog::create([
+            'order_id'  => $order->id,
+            'driver_id' => session('driver_id'),
+            'status'    => $statusBaru,
+            'taken_at'  => now(),
+        ]);
+
+        $order->update(['status' => $statusBaru]);
+
+        return back()->with('success', 'Status berhasil diupdate!');
     }
 
-    $transisi = [
-        'Diproses'        => 'Dijemput',
-        'Dijemput'        => 'Mencari Laundry',
-        'Mencari Laundry' => 'Dicuci',
-        'Dicuci'          => 'Diantar',
-        'Diantar'         => 'Selesai',
-    ];
+    // ================= LEPAS PESANAN =================
 
-    $statusBaru = $transisi[$order->status] ?? null;
+    public function lepasPesanan($id)
+    {
+        $order = Order::findOrFail($id);
 
-    if (!$statusBaru) {
-        return back()->with('error', 'Status tidak bisa diubah');
+        if ($order->current_driver_id != session('driver_id')) {
+            return back()->with('error', 'Bukan pesanan kamu');
+        }
+
+        // Rollback status bercabang berdasarkan tipe_antar_jemput, supaya
+        // pesanan kembali ke tahap yang benar dan bisa diambil driver lain.
+        $rollback = match ($order->tipe_antar_jemput) {
+            'Antar Saja' => [
+                'Dijemput'        => 'Diproses',
+                'Mencari Laundry' => 'Diproses',
+            ],
+            'Jemput Saja' => [
+                // Dicuci adalah titik awal untuk tipe ini, jadi tetap di situ
+                // (bukti nota yang mungkin sudah terupload biarkan tetap ada).
+                'Diantar' => 'Dicuci',
+            ],
+            default => [ // 'Antar Jemput (PP)'
+                'Dijemput'        => 'Diproses',
+                'Mencari Laundry' => 'Diproses',
+                'Diantar'         => 'Dicuci',
+            ],
+        };
+
+        $statusBaru = $rollback[$order->status] ?? $order->status;
+
+        $order->update([
+            'status'            => $statusBaru,
+            'current_driver_id' => null,
+        ]);
+
+        return back()->with('success', 'Pesanan berhasil dilepas');
     }
 
-    OrderDriverLog::create([
-        'order_id'  => $order->id,
-        'driver_id' => session('driver_id'),
-        'status'    => $statusBaru,
-        'taken_at'  => now(),
-    ]);
-
-    $order->update(['status' => $statusBaru]);
-
-    return back()->with('success', 'Status berhasil diupdate!');
-}
-
-   // ================= LEPAS PESANAN =================
-
-public function lepasPesanan($id)
-{
-    $order = Order::findOrFail($id);
-
-    if ($order->current_driver_id != session('driver_id')) {
-        return back()->with('error', 'Bukan pesanan kamu');
-    }
-
-    $rollback = [
-        'Dijemput'        => 'Diproses',
-        'Mencari Laundry' => 'Diproses',
-        'Diantar'         => 'Dicuci',
-    ];
-
-    $statusBaru = $rollback[$order->status] ?? $order->status;
-
-    $order->update([
-        'status'            => $statusBaru,
-        'current_driver_id' => null,
-    ]);
-
-    return back()->with('success', 'Pesanan berhasil dilepas');
-}
-
-        // ================= UPLOAD FOTO =================
+    // ================= UPLOAD FOTO =================
 
     public function uploadBuktiPengambilan(Request $request, $id)
     {
@@ -241,6 +309,9 @@ public function lepasPesanan($id)
             return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
         }
 
+        // Hanya relevan untuk tipe 'Antar Jemput (PP)' dan 'Antar Saja'.
+        // 'Jemput Saja' tidak pernah melalui tahap Dijemput sehingga
+        // guard status ini otomatis menolaknya.
         if ($order->status !== 'Dijemput') {
             return back()->with('error', 'Upload bukti pengambilan hanya bisa dilakukan saat status Dijemput');
         }
@@ -269,8 +340,13 @@ public function lepasPesanan($id)
             return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
         }
 
-        if ($order->status !== 'Mencari Laundry') {
-            return back()->with('error', 'Upload bukti nota hanya bisa dilakukan saat status Mencari Laundry');
+        // Bukti nota bisa diupload pada dua kondisi status:
+        // - 'Mencari Laundry' -> alur normal (PP / Antar Saja)
+        // - 'Dicuci'          -> alur 'Jemput Saja', driver baru mengambil
+        //                        pesanan yang sudah ada di laundry dan
+        //                        perlu dokumentasi notanya di sini.
+        if (!in_array($order->status, ['Mencari Laundry', 'Dicuci'])) {
+            return back()->with('error', 'Upload bukti nota hanya bisa dilakukan saat status Mencari Laundry atau Dicuci');
         }
 
         $request->validate([
@@ -297,6 +373,9 @@ public function lepasPesanan($id)
             return back()->with('error', 'Kamu tidak bertanggung jawab atas pesanan ini');
         }
 
+        // Hanya relevan untuk tipe 'Antar Jemput (PP)' dan 'Jemput Saja'.
+        // 'Antar Saja' tidak pernah mencapai status Diantar sehingga
+        // guard status ini otomatis menolaknya.
         if ($order->status !== 'Diantar') {
             return back()->with('error', 'Upload bukti pengiriman hanya bisa dilakukan saat status Diantar');
         }
@@ -331,5 +410,4 @@ public function lepasPesanan($id)
 
         return back()->with('success', 'Foto berhasil dihapus');
     }
-    }
-
+}

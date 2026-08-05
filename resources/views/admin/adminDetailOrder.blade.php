@@ -299,6 +299,7 @@
         .alert { padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; font-size: 14px; }
         .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
         .alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .alert-error ul { margin: 0; padding-left: 18px; }
 
     </style>
 
@@ -373,6 +374,19 @@
         <div class="alert alert-error">❌ {{ session('error') }}</div>
     @endif
 
+    {{-- ✅ FIX: tampilkan validation error, sebelumnya form gagal validasi
+         secara diam-diam (silent fail) karena tidak ada blok ini --}}
+    @if($errors->any())
+        <div class="alert alert-error">
+            ❌ Update gagal, mohon periksa kembali:
+            <ul>
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     {{--
         ✅ FIX: Form "Lepaskan Driver" diletakkan di LUAR form utama.
         Sebelumnya form ini bersarang (nested) di dalam form update,
@@ -417,31 +431,31 @@
 
                 <div class="form-group">
                     <label>Nama</label>
-                    <input type="text" name="nama" value="{{ $order->nama }}">
+                    <input type="text" name="nama" value="{{ old('nama', $order->nama) }}">
                 </div>
 
                 <div class="form-group">
                     <label>Phone</label>
-                    <input type="text" name="phone" value="{{ $order->phone }}">
+                    <input type="text" name="phone" value="{{ old('phone', $order->phone) }}">
                 </div>
 
                 <div class="form-group">
                     <label>Alamat Customer</label>
-                    <textarea name="alamat_customer">{{ $order->alamat_customer }}</textarea>
+                    <textarea name="alamat_customer">{{ old('alamat_customer', $order->alamat_customer) }}</textarea>
                 </div>
 
                 <div class="section-title">Laundry</div>
 
                 <div class="form-group">
                     <label>Alamat Laundry</label>
-                    <textarea name="alamat_laundry">{{ $order->alamat_laundry }}</textarea>
+                    <textarea name="alamat_laundry">{{ old('alamat_laundry', $order->alamat_laundry) }}</textarea>
                 </div>
 
                 <div class="form-group">
                     <label>Phone Laundry</label>
                     <input type="text"
                            name="phone_laundry"
-                           value="{{ $order->phone_laundry }}">
+                           value="{{ old('phone_laundry', $order->phone_laundry) }}">
                 </div>
 
             </div>
@@ -463,13 +477,27 @@
                 <div class="form-group">
                     <label>Status</label>
                     <select name="status">
-                        <option value="Unconfirmed"    {{ $order->status == 'Unconfirmed'    ? 'selected' : '' }}>Unconfirmed</option>
-                        <option value="Diproses"        {{ $order->status == 'Diproses'        ? 'selected' : '' }}>Diproses</option>
-                        <option value="Dijemput"        {{ $order->status == 'Dijemput'        ? 'selected' : '' }}>Dijemput</option>
-                        <option value="Mencari Laundry" {{ $order->status == 'Mencari Laundry' ? 'selected' : '' }}>Mencari Laundry</option>
-                        <option value="Dicuci"          {{ $order->status == 'Dicuci'          ? 'selected' : '' }}>Dicuci</option>
-                        <option value="Diantar"         {{ $order->status == 'Diantar'         ? 'selected' : '' }}>Diantar</option>
-                        <option value="Selesai"         {{ $order->status == 'Selesai'         ? 'selected' : '' }}>Selesai</option>
+                        @php $statusValue = old('status', $order->status); @endphp
+                        <option value="Unconfirmed"    {{ $statusValue == 'Unconfirmed'    ? 'selected' : '' }}>Unconfirmed</option>
+                        <option value="Diproses"        {{ $statusValue == 'Diproses'        ? 'selected' : '' }}>Diproses</option>
+                        <option value="Dijemput"        {{ $statusValue == 'Dijemput'        ? 'selected' : '' }}>Dijemput</option>
+                        <option value="Mencari Laundry" {{ $statusValue == 'Mencari Laundry' ? 'selected' : '' }}>Mencari Laundry</option>
+                        <option value="Dicuci"          {{ $statusValue == 'Dicuci'          ? 'selected' : '' }}>Dicuci</option>
+                        <option value="Diantar"         {{ $statusValue == 'Diantar'         ? 'selected' : '' }}>Diantar</option>
+                        <option value="Selesai"         {{ $statusValue == 'Selesai'         ? 'selected' : '' }}>Selesai</option>
+                    </select>
+                </div>
+
+                {{-- ✅ FIX: field ini sebelumnya tidak ada di form, padahal
+                     wajib diisi (required) di validasi OrderController@update.
+                     Akibatnya submit selalu gagal validasi secara diam-diam. --}}
+                <div class="form-group">
+                    <label>Tipe Antar Jemput</label>
+                    <select name="tipe_antar_jemput">
+                        @php $tipeValue = old('tipe_antar_jemput', $order->tipe_antar_jemput); @endphp
+                        <option value="Antar Saja"        {{ $tipeValue == 'Antar Saja'        ? 'selected' : '' }}>Antar Saja</option>
+                        <option value="Jemput Saja"       {{ $tipeValue == 'Jemput Saja'       ? 'selected' : '' }}>Jemput Saja</option>
+                        <option value="Antar Jemput (PP)" {{ $tipeValue == 'Antar Jemput (PP)' ? 'selected' : '' }}>Antar Jemput (PP)</option>
                     </select>
                 </div>
 
@@ -477,27 +505,28 @@
                     <label>Jenis Layanan</label>
                     <input type="text"
                            name="jenis_layanan"
-                           value="{{ $order->jenis_layanan }}">
+                           value="{{ old('jenis_layanan', $order->jenis_layanan) }}">
                 </div>
 
                 <div class="form-group">
                     <label>Estimasi Jumlah Laundry</label>
                     <input type="text"
                            name="estimasi_jumlah_laundry"
-                           value="{{ $order->estimasi_jumlah_laundry }}">
+                           value="{{ old('estimasi_jumlah_laundry', $order->estimasi_jumlah_laundry) }}">
                 </div>
 
                 <div class="form-group">
                     <label>Menggunakan Jasa Pemilahan Pakaian</label>
                     <select name="is_sorted">
-                        <option value="0" {{ !$order->is_sorted ? 'selected' : '' }}>Tidak</option>
-                        <option value="1" {{ $order->is_sorted  ? 'selected' : '' }}>Ya</option>
+                        @php $isSorted = old('is_sorted', $order->is_sorted); @endphp
+                        <option value="0" {{ !$isSorted ? 'selected' : '' }}>Tidak</option>
+                        <option value="1" {{ $isSorted  ? 'selected' : '' }}>Ya</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>Catatan</label>
-                    <textarea name="note">{{ $order->note }}</textarea>
+                    <textarea name="note">{{ old('note', $order->note) }}</textarea>
                 </div>
 
                 <div class="form-group">
@@ -506,7 +535,7 @@
                         type="text"
                         id="tanggal_penjemputan"
                         name="tanggal_penjemputan"
-                        value="{{ $order->tanggal_penjemputan ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->format('Y-m-d H:i') : '' }}"
+                        value="{{ old('tanggal_penjemputan', $order->tanggal_penjemputan ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->format('Y-m-d H:i') : '') }}"
                         placeholder="Pilih tanggal dan jam">
                 </div>
 
@@ -514,7 +543,7 @@
                     <label>Fee</label>
                     <input type="number"
                            name="fee"
-                           value="{{ $order->fee }}">
+                           value="{{ old('fee', $order->fee) }}">
                 </div>
 
                 <div class="form-group">
@@ -522,7 +551,7 @@
                     <input
                         type="text"
                         name="dokumentasi_pakaian"
-                        value="{{ $order->dokumentasi_pakaian }}"
+                        value="{{ old('dokumentasi_pakaian', $order->dokumentasi_pakaian) }}"
                         placeholder="Masukkan link dokumentasi">
 
                     @if($order->dokumentasi_pakaian)

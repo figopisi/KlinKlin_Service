@@ -7,6 +7,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/css/buat_pesanan.css') }}">
     <link rel="stylesheet" href="{{ asset('asset/css/style.css') }}">
+    <style>
+        .tipe-keterangan {
+            display: block;
+            margin-top: 6px;
+            font-size: 12.5px;
+            color: #888;
+            line-height: 1.5;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -16,6 +25,7 @@
         <h1>Admin Dashboard</h1>
         <div style="display:flex; gap:10px;">
             <a href="{{ route('admin.promosi.index') }}" class="back-btn">Manajemen Promo</a>
+            <a href="{{ route('admin.drivers.index') }}" class="back-btn">Manajemen Driver</a>
             <a href="/admin/orders" class="back-btn">Lihat Semua Pesanan</a>
         </div>
     </div>
@@ -121,6 +131,19 @@
                 </div>
 
                 <div class="detail-item">
+                    <strong>Tipe Antar Jemput</strong>
+                    <select name="tipe_antar_jemput" id="tipe_antar_jemput" required>
+                        <option value="">Pilih tipe</option>
+                        <option value="Antar Jemput (PP)" @selected(old('tipe_antar_jemput') === 'Antar Jemput (PP)')>Antar Jemput (PP)</option>
+                        <option value="Antar Saja" @selected(old('tipe_antar_jemput') === 'Antar Saja')>Antar Saja</option>
+                        <option value="Jemput Saja" @selected(old('tipe_antar_jemput') === 'Jemput Saja')>Jemput Saja</option>
+                    </select>
+                    <small class="tipe-keterangan" id="tipe_keterangan">
+                        Pilih salah satu untuk melihat penjelasannya.
+                    </small>
+                </div>
+
+                <div class="detail-item">
                     <strong>Jenis Layanan</strong>
                     <select name="jenis_layanan" required>
                         <option value="">Pilih layanan</option>
@@ -168,7 +191,7 @@
 
                 <div class="detail-item">
                     <strong>Status</strong>
-                    <select name="status">
+                    <select name="status" id="status_select">
                         <option value="Unconfirmed" @selected(old('status') === 'Unconfirmed')>Unconfirmed</option>
                         <option value="Diproses" @selected(old('status') === 'Diproses' || old('status') === null)>Diproses</option>
                         <option value="Dijemput" @selected(old('status') === 'Dijemput')>Dijemput</option>
@@ -177,6 +200,9 @@
                         <option value="Diantar" @selected(old('status') === 'Diantar')>Diantar</option>
                         <option value="Selesai" @selected(old('status') === 'Selesai')>Selesai</option>
                     </select>
+                    <small class="tipe-keterangan">
+                        Untuk tipe "Jemput Saja", status akan otomatis diarahkan ke <strong>Dicuci</strong> oleh sistem, apa pun yang dipilih di sini.
+                    </small>
                 </div>
 
                 <!-- DOKUMENTASI -->
@@ -232,6 +258,27 @@ document.getElementById('adminOrderForm').addEventListener('submit', function (e
         e.preventDefault();
         alert('Tanggal & jam penjemputan wajib diisi.');
         localInput.focus();
+    }
+});
+
+// Keterangan singkat tiap tipe antar jemput, biar admin tidak salah pilih
+// (mengingat status akhirnya bergantung pada tipe ini di server).
+var tipeKeteranganMap = {
+    'Antar Jemput (PP)': 'Alur lengkap: driver jemput dari customer → antar ke laundry → jemput dari laundry → antar ke customer.',
+    'Antar Saja': 'Driver hanya mengantar baju ke laundry. Pesanan otomatis selesai setelah bukti nota diupload.',
+    'Jemput Saja': 'Driver hanya mengambil baju dari laundry dan mengantarnya ke customer. Tidak ada tahap penjemputan dari customer. Status akan otomatis menjadi "Dicuci" saat disimpan.'
+};
+
+document.getElementById('tipe_antar_jemput').addEventListener('change', function () {
+    var keteranganEl = document.getElementById('tipe_keterangan');
+    keteranganEl.textContent = tipeKeteranganMap[this.value] || 'Pilih salah satu untuk melihat penjelasannya.';
+});
+
+// Trigger sekali saat load, kalau old() sudah terisi (mis. setelah validasi gagal)
+window.addEventListener('DOMContentLoaded', function () {
+    var tipeEl = document.getElementById('tipe_antar_jemput');
+    if (tipeEl.value) {
+        tipeEl.dispatchEvent(new Event('change'));
     }
 });
 </script>

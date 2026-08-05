@@ -25,13 +25,26 @@ class Order extends Model
         'status',
         'token',
         'dokumentasi_pakaian',
-        "tanggal_penjemputan",
+        'tanggal_penjemputan',
         'jenis_layanan',
         'estimasi_jumlah_laundry',
         'current_driver_id',
-];
+        'zona',
+        'tipe_antar_jemput',
+        'jarak_km',
+        'rincian_fee',
+    ];
 
-        // Relasi ke log driver
+    protected $casts = [
+        'is_sorted'           => 'boolean',
+        'fee'                 => 'integer',
+        'jarak_km'            => 'decimal:2',
+        'tanggal_penjemputan' => 'datetime',
+        'created_at'          => 'datetime',
+        'updated_at'          => 'datetime',
+    ];
+
+    // Relasi ke log driver
     public function driverLogs()
     {
         return $this->hasMany(OrderDriverLog::class);
@@ -42,7 +55,7 @@ class Order extends Model
         return $this->belongsTo(Driver::class, 'current_driver_id');
     }
 
-        public function photos()
+    public function photos()
     {
         return $this->hasMany(OrderPhoto::class);
     }
@@ -61,5 +74,4 @@ class Order extends Model
     {
         return $this->hasOne(OrderPhoto::class)->where('type', 'nota');
     }
-
 }

@@ -80,6 +80,7 @@
     .d-banner.editable{ background: #FFF7E0; color: #8A6D1F; border: 1px solid #F5E1A0; }
     .d-banner.readonly{ background: #EEF3FC; color: var(--blue); border: 1px solid #D7E3F7; }
     .d-banner.warn{ background: #FFF7E0; color: #8A6D1F; border: 1px solid #F5E1A0; }
+    .d-banner.tipe{ background: #EFEBFB; color: #5B3FA3; border: 1px solid #DCD1F5; }
 
     /* ---- CARD ---- */
     .d-card{
@@ -121,6 +122,18 @@
         letter-spacing: 0;
         color: #8A6D1F;
         background: #FFF3C4;
+        padding: 2px 8px;
+        border-radius: 8px;
+        margin-left: 6px;
+    }
+    .d-field .locked-badge{
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0;
+        color: rgba(14,23,38,.45);
+        background: #EDEFF3;
         padding: 2px 8px;
         border-radius: 8px;
         margin-left: 6px;
@@ -173,6 +186,17 @@
     .d-status-Dicuci{ background: #8B5CF6; }
     .d-status-Diantar{ background: #F0A93B; }
     .d-status-Selesai{ background: #2FAE64; }
+
+    .d-tipe-badge{
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 800;
+        letter-spacing: .02em;
+        padding: 7px 15px;
+        border-radius: 20px;
+        color: #fff;
+        background: #5B3FA3;
+    }
 
     .d-inline-link{
         display: inline-flex;
@@ -388,6 +412,21 @@
         <div class="d-alert d-alert-error">❌ {{ session('error') }}</div>
     @endif
 
+    {{-- BANNER TIPE ANTAR JEMPUT --}}
+    @php
+        $tipeKeterangan = match($order->tipe_antar_jemput) {
+            'Antar Saja'  => 'Driver hanya perlu mengantar baju ke laundry. Pesanan otomatis selesai setelah bukti nota diupload.',
+            'Jemput Saja' => 'Driver hanya perlu mengambil baju dari laundry dan mengantarnya ke customer. Tidak ada tahap penjemputan dari customer.',
+            default       => 'Alur lengkap: jemput dari customer → antar ke laundry → jemput dari laundry → antar ke customer.',
+        };
+    @endphp
+    <div class="d-banner tipe">
+        🛵 <div>
+            <span class="d-tipe-badge">{{ $order->tipe_antar_jemput }}</span>
+            <div style="margin-top:8px;">{{ $tipeKeterangan }}</div>
+        </div>
+    </div>
+
     {{-- BANNER INFO MODE --}}
     @if($bisaEdit)
         <div class="d-banner editable">
@@ -463,6 +502,10 @@
                 <span class="d-status-inline d-status-{{ str_replace(' ', '-', $order->status) }}">{{ $order->status }}</span>
             </div>
             <div class="d-field">
+                <label>Tipe Antar Jemput <span class="locked-badge">🔒 tidak bisa diubah</span></label>
+                <input type="text" value="{{ $order->tipe_antar_jemput }}" readonly>
+            </div>
+            <div class="d-field">
                 <label>Jenis Layanan</label>
                 <input type="text" value="{{ $order->jenis_layanan ?? '-' }}" readonly>
             </div>
@@ -526,14 +569,28 @@
         $statusOrder     = ['Diproses', 'Dijemput', 'Mencari Laundry', 'Dicuci', 'Diantar', 'Selesai'];
         $statusIndex     = array_search($order->status, $statusOrder);
         $isCurrentDriver = $order->current_driver_id == session('driver_id');
+        $tipe            = $order->tipe_antar_jemput;
+
+        // Grup foto mana saja yang relevan untuk tipe_antar_jemput ini.
+        $perluPengambilan = in_array($tipe, ['Antar Jemput (PP)', 'Antar Saja']);
+        $perluPengiriman  = in_array($tipe, ['Antar Jemput (PP)', 'Jemput Saja']);
+        // Bukti nota selalu relevan untuk ketiga tipe.
 
         $fotoPengambilan = $order->photos->where('type', 'pengambilan')->first();
         $fotoNota        = $order->photos->where('type', 'nota')->first();
         $fotoPengiriman  = $order->photos->where('type', 'pengiriman')->first();
 
         $bisaHapusPengambilan = $isCurrentDriver && $statusIndex < array_search('Mencari Laundry', $statusOrder);
-        $bisaHapusNota        = $isCurrentDriver && $statusIndex < array_search('Dicuci', $statusOrder);
-        $bisaHapusPengiriman  = $isCurrentDriver && $statusIndex < array_search('Selesai', $statusOrder);
+
+        // Untuk 'Jemput Saja', nota diupload saat status masih 'Dicuci' (titik awal
+        // driver bergabung), jadi ambang batas hapus digeser ke 'Diantar'.
+        // Untuk tipe lain, nota diupload saat 'Mencari Laundry', ambang tetap 'Dicuci'.
+        $ambangHapusNota = $tipe === 'Jemput Saja'
+            ? array_search('Diantar', $statusOrder)
+            : array_search('Dicuci', $statusOrder);
+        $bisaHapusNota = $isCurrentDriver && $statusIndex < $ambangHapusNota;
+
+        $bisaHapusPengiriman = $isCurrentDriver && $statusIndex < array_search('Selesai', $statusOrder);
     @endphp
 
     @if($statusIndex >= array_search('Dijemput', $statusOrder))
@@ -541,17 +598,20 @@
         <div class="d-card-title">📷 Foto Bukti</div>
 
         @php
-            $statusBerikutnya = match($order->status) {
-                'Dijemput'        => 'Mencari Laundry',
-                'Mencari Laundry' => 'Dicuci',
-                'Diantar'         => 'Selesai',
-                default           => null,
+            $statusBerikutnya = match(true) {
+                $order->status === 'Dijemput' => 'Mencari Laundry',
+                $order->status === 'Mencari Laundry' && $tipe === 'Antar Saja' => 'Selesai',
+                $order->status === 'Mencari Laundry' => 'Dicuci',
+                $order->status === 'Dicuci' && $tipe === 'Jemput Saja' => 'Diantar',
+                $order->status === 'Diantar' => 'Selesai',
+                default => null,
             };
-            $fotoYangDibutuhkan = match($order->status) {
-                'Dijemput'        => 'bukti pengambilan',
-                'Mencari Laundry' => 'bukti nota',
-                'Diantar'         => 'bukti pengiriman',
-                default           => null,
+            $fotoYangDibutuhkan = match(true) {
+                $order->status === 'Dijemput' => 'bukti pengambilan',
+                $order->status === 'Mencari Laundry' => 'bukti nota',
+                $order->status === 'Dicuci' && $tipe === 'Jemput Saja' => 'bukti nota',
+                $order->status === 'Diantar' => 'bukti pengiriman',
+                default => null,
             };
         @endphp
 
@@ -562,6 +622,7 @@
         @endif
 
         {{-- BUKTI PENGAMBILAN --}}
+        @if($perluPengambilan)
         <div class="d-foto-group">
             <div class="d-foto-label">Bukti Pengambilan Baju</div>
             @if($fotoPengambilan)
@@ -601,8 +662,9 @@
                 @endif
             @endif
         </div>
+        @endif
 
-        {{-- BUKTI NOTA --}}
+        {{-- BUKTI NOTA (selalu relevan untuk semua tipe) --}}
         @if($statusIndex >= array_search('Mencari Laundry', $statusOrder))
         <div class="d-foto-group">
             <div class="d-foto-label">Bukti Nota Laundry</div>
@@ -621,7 +683,12 @@
                     <small class="d-foto-locked">🔒 Foto tidak bisa dihapus setelah status berubah</small>
                 @endif
             @else
-                @if($isCurrentDriver && $order->status === 'Mencari Laundry')
+                {{-- Untuk 'Jemput Saja', driver upload nota saat status masih 'Dicuci'.
+                     Untuk tipe lain, upload dilakukan saat 'Mencari Laundry'. --}}
+                @if($isCurrentDriver && (
+                        $order->status === 'Mencari Laundry'
+                        || ($order->status === 'Dicuci' && $tipe === 'Jemput Saja')
+                    ))
                     <form id="formFotoNota"
                         action="{{ route('driver.foto.nota', $order->id) }}"
                         method="POST" enctype="multipart/form-data">
@@ -646,7 +713,7 @@
         @endif
 
         {{-- BUKTI PENGIRIMAN --}}
-        @if($statusIndex >= array_search('Diantar', $statusOrder))
+        @if($perluPengiriman && $statusIndex >= array_search('Diantar', $statusOrder))
         <div class="d-foto-group">
             <div class="d-foto-label">Bukti Pengiriman Baju</div>
             @if($fotoPengiriman)
@@ -696,12 +763,13 @@
     {{-- ========================= --}}
     @if($isCurrentDriver && $order->status !== 'Selesai')
     @php
-        $labelUpdate = match($order->status) {
-            'Dijemput'        => '🔍 Sudah Dijemput',
-            'Mencari Laundry' => '🧺 Sudah di Laundry',
-            'Dicuci'          => '🚚 Antar ke Customer',
-            'Diantar'         => '✅ Selesai Diantar',
-            default           => null,
+        $labelUpdate = match(true) {
+            $order->status === 'Dijemput' => '🔍 Sudah Dijemput',
+            $order->status === 'Mencari Laundry' && $tipe === 'Antar Saja' => '✅ Selesai Antar ke Laundry',
+            $order->status === 'Mencari Laundry' => '🧺 Sudah di Laundry',
+            $order->status === 'Dicuci' && $tipe === 'Jemput Saja' => '🚚 Antar ke Customer',
+            $order->status === 'Diantar' => '✅ Selesai Diantar',
+            default => null,
         };
     @endphp
 
@@ -791,6 +859,7 @@
         const syarat = {
             'Dijemput':        `⚠️ Pastikan sudah upload <strong>bukti pengambilan</strong> pesanan <strong>${token}</strong>.`,
             'Mencari Laundry': `⚠️ Pastikan sudah upload <strong>bukti nota</strong> pesanan <strong>${token}</strong>.`,
+            'Dicuci':          `⚠️ Pastikan sudah upload <strong>bukti nota</strong> pesanan <strong>${token}</strong>.`,
             'Diantar':         `⚠️ Pastikan sudah upload <strong>bukti pengiriman</strong> pesanan <strong>${token}</strong>.`,
         };
         const pesanSyarat = syarat[status] ? `<br><br>${syarat[status]}` : '';

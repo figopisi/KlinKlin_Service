@@ -126,7 +126,7 @@
             <p class="reveal" data-reveal="up" style="--delay:.1s" data-i18n="about_desc">Bersama KlinKlin, kami hadir untuk memastikan pakaianmu selalu bersih, segar, dan terawat. Dengan semangat melayani dan teknologi yang terus berkembang, kami berusaha melampaui ekspektasimu setiap saat.</p>
             <div class="about-stats reveal" data-reveal="up" style="--delay:.2s">
                 <div class="stat">
-                    <div class="stat-num">37<span>+</span></div>
+                    <div class="stat-num">150<span>+</span></div>
                     <div class="stat-label" data-i18n-html="about_stat1"><strong>Pesanan</strong> Selesai</div>
                 </div>
                 <span class="stat-divider" aria-hidden="true"></span>

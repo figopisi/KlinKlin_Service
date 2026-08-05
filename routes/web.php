@@ -141,3 +141,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::put('/promosi/{promosi}', [PromotionController::class, 'update'])->name('promosi.update');
     Route::delete('/promosi/{promosi}', [PromotionController::class, 'destroy'])->name('promosi.destroy');
 });
+
+use App\Http\Controllers\DriverManagementController;
+
+Route::prefix('admin/drivers')->name('admin.drivers.')->group(function () {
+    Route::get('/', [DriverManagementController::class, 'index'])->name('index');
+    Route::post('/', [DriverManagementController::class, 'store'])->name('store');
+    Route::post('/{id}/toggle-active', [DriverManagementController::class, 'toggleActive'])->name('toggleActive');
+    Route::post('/{id}/reset-password', [DriverManagementController::class, 'resetPassword'])->name('resetPassword');
+});

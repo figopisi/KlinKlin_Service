@@ -27,6 +27,10 @@
     }
     .of-field.of-error .of-error-msg { display:block; }
 
+    /* tanda wajib dinamis (muncul/hilang tergantung tipe penjemputan) */
+    .of-required-dynamic { display:none; }
+    .of-field.is-dynamic-required .of-required-dynamic { display:inline; }
+
     /* banner notifikasi global */
     #orderNotice {
         display:none;
@@ -107,6 +111,17 @@
                         </div>
                     </div>
 
+                    <div class="of-field" data-required="true">
+                        <label for="f_tipe_antar_jemput" data-i18n="form_tipe_label">Tipe Penjemputan<span class="of-required">*</span></label>
+                        <select id="f_tipe_antar_jemput">
+                            <option value="" data-i18n="form_pilih">Pilih</option>
+                            <option value="Antar Jemput (PP)" data-i18n="form_tipe_opt1">Antar Jemput (PP)</option>
+                            <option value="Antar Saja" data-i18n="form_tipe_opt2">Antar Saja</option>
+                            <option value="Jemput Saja" data-i18n="form_tipe_opt3">Jemput Saja</option>
+                        </select>
+                        <span class="of-error-msg">Tipe penjemputan wajib dipilih.</span>
+                    </div>
+
                     <div class="of-row">
                         <div class="of-field" data-required="true">
                             <label for="f_layanan" data-i18n="form_layanan_label">Jenis Layanan<span class="of-required">*</span></label>
@@ -129,12 +144,14 @@
                         </div>
                     </div>
 
-                    <div class="of-field">
+                    <div class="of-field" id="of_field_laundry">
                         <label for="f_laundry">
                             <span data-i18n="form_laundry_label">Alamat laundry Pilihan</span>
-                            <span class="of-opt" data-i18n="form_opsional">(opsional)</span>
+                            <span class="of-required of-required-dynamic">*</span>
+                            <span class="of-opt of-opt-dynamic" data-i18n="form_opsional">(opsional)</span>
                         </label>
                         <input id="f_laundry" type="text" placeholder="Kosongkan jika diserahkan ke KlinKlin" data-i18n-placeholder="form_laundry_ph">
+                        <span class="of-error-msg" data-i18n="form_laundry_required_msg">Alamat laundry wajib diisi untuk tipe "Jemput Saja".</span>
                     </div>
 
                     <div class="of-row">

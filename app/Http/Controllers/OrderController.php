@@ -22,66 +22,78 @@ class OrderController extends Controller
     }
 
     public function search(Request $request)
-{
-    $token = $request->input('token');
+    {
+        $token = $request->input('token');
 
-    $orders = Order::with([
-        'driverLogs.driver',
-        'currentDriver'
-    ])
-    ->where('token', $token)
-    ->get();
+        $orders = Order::with([
+            'driverLogs.driver',
+            'currentDriver'
+        ])
+        ->where('token', $token)
+        ->get();
 
-    return view('pesanan', compact('orders', 'token'));
-}
-
- // ================= BUAT PESANAN =================
-public function store(Request $request)
-{
-    $data = $request->validate([
-        'nama'                    => 'required|string|max:100',
-        'phone'                   => 'required|string|max:20',
-        'alamat_customer'         => 'required|string',
-        'alamat_laundry'          => 'nullable|string',
-        'phone_laundry'           => 'nullable|string|max:20',
-        'fee'                     => 'required|integer|min:0',
-        'is_sorted'               => 'nullable|boolean',
-        'note'                    => 'nullable|string',
-        'status'                  => 'nullable|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
-        'dokumentasi_pakaian'     => 'nullable|url|max:500',
-        'tanggal_penjemputan'     => 'required|date_format:Y-m-d H:i',
-        'jenis_layanan'           => 'required|string',
-        'estimasi_jumlah_laundry' => 'nullable|string',
-    ]);
-
-    $data['status'] = $data['status'] ?? 'Diproses';
-    $data['is_sorted'] = $data['is_sorted'] ?? 0;
-    $data['alamat_laundry'] = $data['alamat_laundry'] ?? '-';
-
-    if (!$data['is_sorted']) {
-        $data['dokumentasi_pakaian'] = null;
+        return view('pesanan', compact('orders', 'token'));
     }
 
-    $data['token'] = $this->generateUniqueToken();
+    // ================= BUAT PESANAN =================
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'nama'                    => 'required|string|max:100',
+            'phone'                   => 'required|string|max:20',
+            'alamat_customer'         => 'required|string',
+            'alamat_laundry'          => 'nullable|string',
+            'phone_laundry'           => 'nullable|string|max:20',
+            'fee'                     => 'required|integer|min:0',
+            'is_sorted'               => 'nullable|boolean',
+            'note'                    => 'nullable|string',
+            'status'                  => 'nullable|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
+            'dokumentasi_pakaian'     => 'nullable|url|max:500',
+            'tanggal_penjemputan'     => 'required|date_format:Y-m-d H:i',
+            'jenis_layanan'           => 'required|string',
+            'estimasi_jumlah_laundry' => 'nullable|string',
+            'tipe_antar_jemput'       => 'required|in:Antar Saja,Jemput Saja,Antar Jemput (PP)',
+        ]);
 
-    Order::create($data);
+        $data['is_sorted'] = $data['is_sorted'] ?? 0;
+        $data['alamat_laundry'] = $data['alamat_laundry'] ?? '-';
 
-    return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $data['token']);
-}
+        if (!$data['is_sorted']) {
+            $data['dokumentasi_pakaian'] = null;
+        }
+
+        // Status awal ditentukan oleh tipe_antar_jemput.
+        // "Jemput Saja" artinya driver hanya mengambil pesanan yang sudah
+        // ada di laundry (tidak perlu tahap Dijemput/Mencari Laundry),
+        // sehingga order langsung dibuat berstatus 'Dicuci' agar muncul
+        // di daftar pesanan tersedia untuk driver pada tahap tersebut.
+        if ($data['tipe_antar_jemput'] === 'Jemput Saja') {
+            $data['status'] = 'Dicuci';
+        } else {
+            $data['status'] = $data['status'] ?? 'Diproses';
+        }
+
+        $data['token'] = $this->generateUniqueToken();
+
+        Order::create($data);
+
+        return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $data['token']);
+    }
 
     public function storeDraft(Request $request)
     {
         $data = $request->validate([
-            'nama' => 'required|string|max:100',
-            'phone' => 'required|string|max:20',
-            'alamat_customer' => 'required|string',
-            'alamat_laundry' => 'nullable|string',
-            'phone_laundry' => 'nullable|string|max:20',
-            'is_sorted' => 'nullable|boolean',
-            'note' => 'nullable|string',
-            'tanggal_penjemputan' => 'nullable|date_format:Y-m-d H:i',
-            'jenis_layanan' => 'nullable|string',
+            'nama'                    => 'required|string|max:100',
+            'phone'                   => 'required|string|max:20',
+            'alamat_customer'         => 'required|string',
+            'alamat_laundry'          => 'nullable|string',
+            'phone_laundry'           => 'nullable|string|max:20',
+            'is_sorted'               => 'nullable|boolean',
+            'note'                    => 'nullable|string',
+            'tanggal_penjemputan'     => 'nullable|date_format:Y-m-d H:i',
+            'jenis_layanan'           => 'nullable|string',
             'estimasi_jumlah_laundry' => 'nullable|string',
+            'tipe_antar_jemput'       => 'nullable|in:Antar Saja,Jemput Saja,Antar Jemput (PP)',
         ]);
 
         $data['status'] = 'Unconfirmed';
@@ -89,7 +101,19 @@ public function store(Request $request)
         $data['is_sorted'] = $data['is_sorted'] ?? 0;
         $data['dokumentasi_pakaian'] = null;
         $data['token'] = $this->generateUniqueToken();
-        $data['alamat_laundry'] = $data['alamat_laundry'] ?? '-'; 
+        $data['alamat_laundry'] = $data['alamat_laundry'] ?? '-';
+        $data['tipe_antar_jemput'] = $data['tipe_antar_jemput'] ?? 'Antar Jemput (PP)';
+
+        // Catatan: status draft tetap 'Unconfirmed' terlepas dari tipe_antar_jemput.
+        // Override status ke 'Dicuci' untuk 'Jemput Saja' baru berlaku
+        // setelah draft dikonfirmasi menjadi pesanan resmi. Sebelumnya hanya
+        // store() yang melakukan override ini, tapi draft yang dikonfirmasi
+        // ADMIN (lewat halaman detail pesanan) memakai method update() di
+        // bawah, yang sebelumnya TIDAK memiliki override serupa. Akibatnya
+        // admin bisa (tanpa sadar) mengubah status draft 'Jemput Saja'
+        // menjadi 'Diproses' dari dropdown, padahal tipe ini seharusnya
+        // tidak pernah melalui status 'Diproses'/'Dijemput'/'Mencari
+        // Laundry'. Fix untuk kasus ini ada di method update() di bawah.
 
         Order::create($data);
 
@@ -142,7 +166,7 @@ public function store(Request $request)
         return view('admin.adminDetailOrder', compact('order'));
     }
 
-        public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         $order = Order::findOrFail($id);
 
@@ -160,9 +184,28 @@ public function store(Request $request)
             'tanggal_penjemputan'     => 'nullable|date_format:Y-m-d H:i',
             'jenis_layanan'           => 'nullable|string',
             'estimasi_jumlah_laundry' => 'nullable|string',
+            'tipe_antar_jemput'       => 'required|in:Antar Saja,Jemput Saja,Antar Jemput (PP)',
         ]);
 
         $data['is_sorted'] = (int) $request->input('is_sorted', 0);
+
+        // ✅ FIX BUG: Order bertipe 'Jemput Saja' tidak pernah melalui
+        // tahap 'Diproses' / 'Dijemput' / 'Mencari Laundry' — driver untuk
+        // tipe ini baru terlibat mulai status 'Dicuci' (ambil dari laundry)
+        // sampai 'Diantar' (antar ke customer). Sebelumnya, saat admin
+        // mengonfirmasi draft (mengubah status dari 'Unconfirmed' ke status
+        // lain lewat dropdown biasa), tidak ada validasi yang mencegah admin
+        // memilih 'Diproses' untuk order 'Jemput Saja'. Akibatnya order
+        // nyasar ke alur status yang salah, dan saat driver mengambilnya,
+        // status ikut lompat ke 'Dijemput' — padahal seharusnya order jenis
+        // ini tidak pernah menampilkan tahap "Bukti Pengambilan".
+        //
+        // Konsisten dengan store(): paksa status ke 'Dicuci' bila admin
+        // memilih status yang tidak relevan untuk tipe 'Jemput Saja'.
+        if ($data['tipe_antar_jemput'] === 'Jemput Saja'
+            && in_array($data['status'], ['Diproses', 'Dijemput', 'Mencari Laundry'])) {
+            $data['status'] = 'Dicuci';
+        }
 
         $order->update($data);
 
@@ -171,26 +214,27 @@ public function store(Request $request)
     }
 
     public function nullifyDriver($id)
-{
-    $order = Order::findOrFail($id);
+    {
+        $order = Order::findOrFail($id);
 
-    // rollback status
-    if (in_array($order->status, ['Dijemput', 'Mencari Laundry'])) {
-        $statusBaru = 'Diproses';
-    } elseif ($order->status === 'Diantar') {
-        $statusBaru = 'Dicuci';
-    } else {
-        $statusBaru = $order->status;
+        // rollback status
+        if (in_array($order->status, ['Dijemput', 'Mencari Laundry'])) {
+            $statusBaru = 'Diproses';
+        } elseif ($order->status === 'Diantar') {
+            $statusBaru = 'Dicuci';
+        } else {
+            $statusBaru = $order->status;
+        }
+
+        $order->update([
+            'status' => $statusBaru,
+            'current_driver_id' => null,
+        ]);
+
+        return back()->with('success', 'Driver berhasil dilepas dari pesanan');
     }
 
-    $order->update([
-        'status' => $statusBaru,
-        'current_driver_id' => null,
-    ]);
-
-    return back()->with('success', 'Driver berhasil dilepas dari pesanan');
-}
-// ================= DELETE ORDER ================= oleh admin
+    // ================= DELETE ORDER ================= oleh admin
     public function destroy($id)
     {
         $order = Order::findOrFail($id);
@@ -237,7 +281,7 @@ public function store(Request $request)
             // BOM biar Excel baca UTF-8 dengan benar (karakter ñ, é, dll aman)
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            fputcsv($file, ['ID', 'Token', 'Nama', 'Phone', 'Alamat Customer', 'Alamat Laundry', 'Status', 'Fee', 'Tanggal Dibuat']);
+            fputcsv($file, ['ID', 'Token', 'Nama', 'Phone', 'Alamat Customer', 'Alamat Laundry', 'Tipe Antar Jemput', 'Status', 'Fee', 'Tanggal Dibuat']);
 
             foreach ($orders as $order) {
                 fputcsv($file, [
@@ -247,6 +291,7 @@ public function store(Request $request)
                     $order->phone,
                     $order->alamat_customer,
                     $order->alamat_laundry,
+                    $order->tipe_antar_jemput,
                     $order->status,
                     $order->fee,
                     $order->created_at->format('Y-m-d H:i'),

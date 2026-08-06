@@ -50,6 +50,14 @@ class CloudinaryService
     }
 
     // -------------------------------------------------------
+    // Upload dokumen driver (mis. surat persetujuan)
+    // -------------------------------------------------------
+    public function uploadDokumenDriver(UploadedFile $file, int $driverId): array
+    {
+        return $this->uploadToCloudinary($file, "laundry/drivers/{$driverId}/documents");
+    }
+
+    // -------------------------------------------------------
     // Hapus gambar berdasarkan public_id
     // -------------------------------------------------------
     public function delete(string $publicId): void

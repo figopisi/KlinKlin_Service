@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'wablas' => [
+        'base_url' => env('WABLAS_BASE_URL'),
+        'token'    => env('WABLAS_TOKEN'),
+        'secret'   => env('WABLAS_SECRET_KEY'),
+        'driver_group_id' => env('WABLAS_DRIVER_GROUP_ID'),
+    ],
+
 ];

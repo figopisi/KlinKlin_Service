@@ -345,6 +345,9 @@
                     </td>
                     <td>
                         <div class="action-cell">
+                            <a href="{{ route('admin.drivers.show', $driver->id) }}" class="btn-small btn-reset" style="text-decoration:none; display:inline-block;">
+                                👁 Detail
+                            </a>
                             <form action="{{ route('admin.drivers.toggleActive', $driver->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn-small {{ $driver->is_active ? 'btn-toggle-on' : 'btn-toggle-off' }}">

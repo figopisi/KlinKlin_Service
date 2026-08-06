@@ -11,10 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Daftarkan alias middleware Anda di sini
         $middleware->alias([
             'auth.admin' => \App\Http\Middleware\AdminAuth::class,
             'auth.driver' => \App\Http\Middleware\AuthDriver::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'webhook/wablas/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

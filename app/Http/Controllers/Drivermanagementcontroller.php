@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
+use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -11,6 +12,10 @@ use Illuminate\Validation\Rule;
 
 class DriverManagementController extends Controller
 {
+    public function __construct(
+        protected CloudinaryService $cloudinary
+    ) {}
+
     // ================= LIST + PENCAPAIAN =================
     public function index(Request $request)
     {
@@ -92,5 +97,71 @@ class DriverManagementController extends Controller
         $driver->update(['password' => Hash::make($data['password'])]);
 
         return back()->with('success', 'Password driver "' . $driver->name . '" berhasil direset');
+    }
+
+    // ================= DETAIL DRIVER =================
+    public function show($id)
+    {
+        $driver = Driver::findOrFail($id);
+
+        // Pencapaian driver ini, konsisten dengan cara hitung di index()
+        $pencapaian = DB::table('order_driver_logs')
+            ->join('orders', 'orders.id', '=', 'order_driver_logs.order_id')
+            ->where('order_driver_logs.status', 'Selesai')
+            ->where('order_driver_logs.driver_id', $driver->id)
+            ->select(
+                DB::raw('COUNT(*) as total_selesai'),
+                DB::raw('SUM(orders.fee) as total_fee')
+            )
+            ->first();
+
+        $driver->total_selesai = $pencapaian->total_selesai ?? 0;
+        $driver->total_fee = $pencapaian->total_fee ?? 0;
+
+        return view('admin.driverDetail', compact('driver'));
+    }
+
+    // ================= UPLOAD DOKUMEN (SURAT PERSETUJUAN) =================
+    public function uploadDocument(Request $request, $id)
+    {
+        $driver = Driver::findOrFail($id);
+
+        $request->validate([
+            'dokumen' => 'required|image|mimes:jpg,jpeg|max:5120',
+        ]);
+
+        // Kalau sudah pernah upload sebelumnya, hapus dulu yang lama di
+        // Cloudinary supaya tidak menumpuk file tak terpakai.
+        if ($driver->document_public_id) {
+            $this->cloudinary->delete($driver->document_public_id);
+        }
+
+        $result = $this->cloudinary->uploadDokumenDriver($request->file('dokumen'), $driver->id);
+
+        $driver->update([
+            'document_url'       => $result['url'],
+            'document_public_id' => $result['public_id'],
+        ]);
+
+        return back()->with('success', 'Dokumen driver berhasil diupload');
+    }
+
+    // ================= HAPUS DOKUMEN =================
+    public function deleteDocument($id)
+    {
+        $driver = Driver::findOrFail($id);
+
+        if (!$driver->document_public_id) {
+            return back()->with('error', 'Driver ini belum punya dokumen');
+        }
+
+        $this->cloudinary->delete($driver->document_public_id);
+
+        $driver->update([
+            'document_url'       => null,
+            'document_public_id' => null,
+        ]);
+
+        return back()->with('success', 'Dokumen driver berhasil dihapus');
     }
 }

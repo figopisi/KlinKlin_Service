@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Services\WablasService;
 
 class Order extends Model
 {
@@ -74,4 +75,50 @@ class Order extends Model
     {
         return $this->hasOne(OrderPhoto::class)->where('type', 'nota');
     }
+
+    protected static function booted()
+    {
+        // Notifikasi ke customer saat status jadi 'Diantar' (sudah ada sebelumnya)
+        static::updated(function (Order $order) {
+            if ($order->isDirty('status') && $order->status === 'Diantar') {
+                $driver = $order->currentDriver;
+
+                $driverInfo = $driver
+                    ? "🛵 Driver: {$driver->name}\n📞 Kontak Driver: {$driver->phone}\n\n"
+                    : '';
+
+                $linkCek = "https://klinklin.my.id/pesanan/search?token={$order->token}";
+
+                $message = "Halo {$order->nama} 👋\n\n"
+                    . "Pesanan laundry Anda dengan kode *{$order->token}* sedang dalam perjalanan diantar ke alamat Anda 🚚\n\n"
+                    . $driverInfo
+                    . "Cek detail pesanan Anda di sini:\n{$linkCek}\n\n"
+                    . "Terima kasih telah menggunakan layanan kami! 🙏";
+
+                app(WablasService::class)->sendText($order->phone, $message);
+            }
+        });
+
+        // Notifikasi ke grup driver saat pesanan baru dibuat & belum ada driver
+        static::created(function (Order $order) {
+            if ($order->status === 'Diproses' && is_null($order->current_driver_id)) {
+                $groupId = config('services.wablas.driver_group_id');
+
+                $alamatLaundry = $order->alamat_laundry ?: '-';
+
+                $message = "Hi Driver KlinKlin! 👋\n"
+                    . "Ada pesanan baru masuk, nih.\n\n"
+                    . "Kode Pesanan : *{$order->token}*\n"
+                    . "Nama Customer : {$order->nama}\n"
+                    . "Tipe Layanan : {$order->jenis_layanan}\n"
+                    . "Alamat Jemput : {$order->alamat_customer}\n"
+                    . "Alamat Laundry : {$alamatLaundry}\n\n"
+                    . "Yuk langsung diambil!\n"
+                    . "https://klinklin.my.id/driver/login";
+
+                app(WablasService::class)->sendGroupText($groupId, $message);
+            }
+        });
+    }
+
 }

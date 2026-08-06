@@ -143,10 +143,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 use App\Http\Controllers\DriverManagementController;
-
+ 
 Route::prefix('admin/drivers')->name('admin.drivers.')->group(function () {
     Route::get('/', [DriverManagementController::class, 'index'])->name('index');
     Route::post('/', [DriverManagementController::class, 'store'])->name('store');
+    Route::get('/{id}', [DriverManagementController::class, 'show'])->name('show');
     Route::post('/{id}/toggle-active', [DriverManagementController::class, 'toggleActive'])->name('toggleActive');
     Route::post('/{id}/reset-password', [DriverManagementController::class, 'resetPassword'])->name('resetPassword');
+    Route::post('/{id}/document', [DriverManagementController::class, 'uploadDocument'])->name('document.upload');
+    Route::delete('/{id}/document', [DriverManagementController::class, 'deleteDocument'])->name('document.delete');
 });
+
+use App\Http\Controllers\WablasWebhookController;
+
+Route::post('/webhook/wablas/inbound', [WablasWebhookController::class, 'handle']);

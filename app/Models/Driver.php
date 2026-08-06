@@ -20,6 +20,8 @@ class Driver extends Model
         'email',
         'password',
         'is_active',
+        'document_url',
+        'document_public_id',
     ];
 
     protected $hidden = [

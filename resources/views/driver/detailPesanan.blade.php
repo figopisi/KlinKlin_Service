@@ -598,18 +598,18 @@
         <div class="d-card-title">📷 Foto Bukti</div>
 
         @php
-            $statusBerikutnya = match(true) {
+           $statusBerikutnya = match(true) {
                 $order->status === 'Dijemput' => 'Mencari Laundry',
-                $order->status === 'Mencari Laundry' && $tipe === 'Antar Saja' => 'Selesai',
-                $order->status === 'Mencari Laundry' => 'Dicuci',
-                $order->status === 'Dicuci' && $tipe === 'Jemput Saja' => 'Diantar',
+                $order->status === 'Mencari Laundry' => 'Dicuci',        // ✅ berlaku semua tipe sekarang
+                $order->status === 'Dicuci' && $tipe === 'Antar Saja' => 'Selesai',
+                $order->status === 'Dicuci' => 'Diantar',                 // PP & Jemput Saja
                 $order->status === 'Diantar' => 'Selesai',
                 default => null,
             };
             $fotoYangDibutuhkan = match(true) {
                 $order->status === 'Dijemput' => 'bukti pengambilan',
                 $order->status === 'Mencari Laundry' => 'bukti nota',
-                $order->status === 'Dicuci' && $tipe === 'Jemput Saja' => 'bukti nota',
+                $order->status === 'Dicuci' && $tipe === 'Jemput Saja' => 'bukti nota', // tetap khusus Jemput Saja
                 $order->status === 'Diantar' => 'bukti pengiriman',
                 default => null,
             };
@@ -763,11 +763,11 @@
     {{-- ========================= --}}
     @if($isCurrentDriver && $order->status !== 'Selesai')
     @php
-        $labelUpdate = match(true) {
+       $labelUpdate = match(true) {
             $order->status === 'Dijemput' => '🔍 Sudah Dijemput',
-            $order->status === 'Mencari Laundry' && $tipe === 'Antar Saja' => '✅ Selesai Antar ke Laundry',
             $order->status === 'Mencari Laundry' => '🧺 Sudah di Laundry',
-            $order->status === 'Dicuci' && $tipe === 'Jemput Saja' => '🚚 Antar ke Customer',
+            $order->status === 'Dicuci' && $tipe === 'Antar Saja' => '✅ Selesai Antar ke Laundry',
+            $order->status === 'Dicuci' => '🚚 Antar ke Customer',   // PP & Jemput Saja
             $order->status === 'Diantar' => '✅ Selesai Diantar',
             default => null,
         };

@@ -78,33 +78,13 @@ class Order extends Model
 
     protected static function booted()
     {
-        // Notifikasi ke customer saat status jadi 'Diantar' (sudah ada sebelumnya)
-        static::updated(function (Order $order) {
-            if ($order->isDirty('status') && $order->status === 'Diantar') {
-                $driver = $order->currentDriver;
-
-                $driverInfo = $driver
-                    ? "🛵 Driver: {$driver->name}\n📞 Kontak Driver: {$driver->phone}\n\n"
-                    : '';
-
-                $linkCek = "https://klinklin.my.id/pesanan/search?token={$order->token}";
-
-                $message = "Halo {$order->nama} 👋\n\n"
-                    . "Pesanan laundry Anda dengan kode *{$order->token}* sedang dalam perjalanan diantar ke alamat Anda 🚚\n\n"
-                    . $driverInfo
-                    . "Cek detail pesanan Anda di sini:\n{$linkCek}\n\n"
-                    . "Terima kasih telah menggunakan layanan kami! 🙏";
-
-                app(WablasService::class)->sendText($order->phone, $message);
-            }
-        });
-
         // Notifikasi ke grup driver saat pesanan baru dibuat & belum ada driver
+        // (berlaku untuk SEMUA tipe, apapun status awalnya — Diproses ATAU Dicuci)
         static::created(function (Order $order) {
-            if ($order->status === 'Diproses' && is_null($order->current_driver_id)) {
+            if (is_null($order->current_driver_id)) {
                 $groupId = config('services.wablas.driver_group_id');
-
-                $alamatLaundry = $order->alamat_laundry ?: '-';
+                $alamatLaundry = ($order->alamat_laundry && $order->alamat_laundry !== '-')
+                    ? $order->alamat_laundry : '-';
 
                 $message = "Hi Driver KlinKlin! 👋\n"
                     . "Ada pesanan baru masuk, nih.\n\n"
@@ -113,10 +93,55 @@ class Order extends Model
                     . "Tipe Layanan : {$order->jenis_layanan}\n"
                     . "Alamat Jemput : {$order->alamat_customer}\n"
                     . "Alamat Laundry : {$alamatLaundry}\n\n"
-                    . "Yuk langsung diambil!\n"
+                    . "Yuk langsung diambil sebelum keduluan driver lain 🏃\n"
                     . "https://klinklin.my.id/driver/login";
 
                 app(WablasService::class)->sendGroupText($groupId, $message);
+            }
+        });
+
+        static::updated(function (Order $order) {
+            // Notifikasi: driver baru saja mengambil pesanan
+            if ($order->isDirty('current_driver_id') && $order->current_driver_id !== null) {
+                $driver = $order->currentDriver;
+
+                if ($driver) {
+                    $linkCek = "https://klinklin.my.id/pesanan/search?token={$order->token}";
+
+                    $message = "Halo {$order->nama} 👋\n\n"
+                        . "Kabar baik! Pesanan Anda dengan kode *{$order->token}* sudah diambil oleh driver kami dan segera diproses 🚀\n\n"
+                        . "🛵 Driver: {$driver->name}\n"
+                        . "📞 Kontak Driver: {$driver->phone}\n\n"
+                        . "Pantau pesanan Anda di sini:\n{$linkCek}\n\n"
+                        . "Terima kasih telah menggunakan layanan kami! 🙏";
+
+                    app(WablasService::class)->sendText($order->phone, $message);
+                }
+            }
+
+            // Notifikasi: pesanan selesai — titik "selesai" berbeda tergantung tipe layanan
+            if ($order->isDirty('status')) {
+                $statusSelesai = match ($order->tipe_antar_jemput) {
+                    'Antar Saja' => 'Selesai',  // tidak ada tahap "Diantar" untuk tipe ini
+                    default      => 'Diantar',  // Antar Jemput (PP) & Jemput Saja
+                };
+
+                if ($order->status === $statusSelesai) {
+                    $driver = $order->currentDriver;
+                    $driverInfo = $driver
+                        ? "🛵 Driver: {$driver->name}\n📞 Kontak Driver: {$driver->phone}\n\n"
+                        : '';
+
+                    $linkCek = "https://klinklin.my.id/pesanan/search?token={$order->token}";
+
+                    $message = "Halo {$order->nama} 👋\n\n"
+                        . "Pesanan laundry Anda dengan kode *{$order->token}* sudah selesai kami proses ✅\n\n"
+                        . $driverInfo
+                        . "Cek detail pesanan Anda di sini:\n{$linkCek}\n\n"
+                        . "Terima kasih telah menggunakan layanan kami! 🙏";
+
+                    app(WablasService::class)->sendText($order->phone, $message);
+                }
             }
         });
     }

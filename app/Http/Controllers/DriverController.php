@@ -151,12 +151,12 @@ class DriverController extends Controller
         } elseif ($order->status === 'Diproses') {
             // Berlaku untuk tipe 'Antar Jemput (PP)' dan 'Antar Saja'
             $statusBaru = 'Dijemput';
+        } elseif ($order->tipe_antar_jemput === 'Antar Saja') {
+            // status pasti 'Dicuci' di sini (nota sudah wajib ada sebelum sampai
+            // status ini), jadi begitu diambil ulang langsung Selesai.
+            $statusBaru = 'Selesai';
         } else {
             // $order->status === 'Dicuci', tipe 'Antar Jemput (PP)'
-            // Order bisa berada di status Dicuci karena proses cuci yang
-            // sudah selesai (nota sudah ada dari tahap Mencari Laundry
-            // sebelumnya) -> begitu diambil driver, langsung lanjut ke
-            // Diantar.
             $punyaNota = $order->photos()->where('type', 'nota')->exists();
             $statusBaru = $punyaNota ? 'Diantar' : 'Dicuci';
         }
@@ -225,11 +225,10 @@ class DriverController extends Controller
             'Antar Saja' => [
                 'Diproses'        => 'Dijemput',
                 'Dijemput'        => 'Mencari Laundry',
-                // Selesai begitu baju sudah diturunkan & tercatat (nota) di laundry
-                'Mencari Laundry' => 'Selesai',
+                'Mencari Laundry' => 'Dicuci',   // ✅ singgah dulu
+                'Dicuci'          => 'Selesai',  // ✅ baru selesai
             ],
             'Jemput Saja' => [
-                // Order sudah dibuat langsung berstatus Dicuci
                 'Dicuci'  => 'Diantar',
                 'Diantar' => 'Selesai',
             ],
@@ -276,16 +275,19 @@ class DriverController extends Controller
             'Antar Saja' => [
                 'Dijemput'        => 'Diproses',
                 'Mencari Laundry' => 'Diproses',
+                'Dicuci'          => 'Mencari Laundry', // ✅ tambah ini
             ],
             'Jemput Saja' => [
-                // Dicuci adalah titik awal untuk tipe ini, jadi tetap di situ
-                // (bukti nota yang mungkin sudah terupload biarkan tetap ada).
                 'Diantar' => 'Dicuci',
             ],
-            default => [ // 'Antar Jemput (PP)'
+            default => [
                 'Dijemput'        => 'Diproses',
                 'Mencari Laundry' => 'Diproses',
                 'Diantar'         => 'Dicuci',
+                // catatan: PP di status 'Dicuci' memang sengaja TIDAK di-rollback
+                // (tetap 'Dicuci' tanpa driver) karena order pada tahap ini
+                // memang dirancang bisa "nganggur" tanpa driver saat proses cuci,
+                // lalu diambil driver (bisa siapa saja) untuk lanjut ke 'Diantar'.
             ],
         };
 

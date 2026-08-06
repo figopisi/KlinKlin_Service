@@ -82,4 +82,43 @@ class WablasService
             return ['status' => false, 'message' => $e->getMessage()];
         }
     }
+
+    public function sendList(string $phone, string $title, string $body, array $rows, string $buttonText = 'Pilih'): array
+    {
+        $phone = $this->normalizePhone($phone);
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "{$this->token}.{$this->secret}",
+                'Content-Type' => 'application/json',
+            ])->post("{$this->baseUrl}/api/v2/send-list", [
+                'data' => [[
+                    'phone' => $phone,
+                    'message' => [
+                        'title' => $title,
+                        'body' => $body,
+                        'footer' => 'KlinKlin Laundry',
+                        'buttonText' => $buttonText,
+                        'sections' => [[
+                            'title' => $title,
+                            'rows' => $rows, // masing-masing: ['title'=>.., 'description'=>.., 'rowId'=>..]
+                        ]],
+                    ],
+                ]],
+            ]);
+
+            $result = $response->json();
+
+            Log::info('Wablas sendList response:', [
+                'phone' => $phone,
+                'response' => $result,
+                'http_status' => $response->status(),
+            ]);
+
+            return $result ?? [];
+        } catch (\Throwable $e) {
+            Log::error('Wablas sendList exception', ['phone' => $phone, 'error' => $e->getMessage()]);
+            return ['status' => false, 'message' => $e->getMessage()];
+        }
+    }
 }

@@ -276,12 +276,17 @@ class WablasWebhookController extends Controller
         $session->update(['step' => 'menu', 'jenis_layanan' => null, 'data' => null]);
 
         $linkCek = "https://klinklin.my.id/pesanan/search?token={$order->token}";
+$alamatLaundryText = ($order->alamat_laundry && $order->alamat_laundry !== '-')
+    ? $order->alamat_laundry
+    : 'Akan ditentukan oleh driver kami';
 
-        return "Pesanan Anda berhasil dibuat! ✅\n\n"
-            . "Kode Pesanan : *{$order->token}*\n\n"
-            . "Simpan kode ini untuk cek status pesanan Anda kapan saja.\n\n"
-            . "Pantau pesanan Anda di sini:\n{$linkCek}\n\n"
-            . "Terima kasih telah menggunakan layanan kami! 🙏";
+return "Pesanan Anda berhasil dibuat! ✅\n\n"
+     . "Kode Pesanan : *{$order->token}*\n"
+     . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
+     . "Alamat Laundry : {$alamatLaundryText}\n\n"
+     . "Simpan kode ini untuk cek status pesanan Anda kapan saja.\n\n"
+     . "Pantau pesanan Anda di sini:\n{$linkCek}\n\n"
+     . "Terima kasih telah menggunakan layanan kami! 🙏";
     }
 
     protected function handleCekStatus(ChatSession $session, string $text): string
@@ -295,6 +300,9 @@ class WablasWebhookController extends Controller
         }
 
         $foto = $order->dokumentasi_pakaian ?: '-';
+        $alamatLaundryText = ($order->alamat_laundry && $order->alamat_laundry !== '-')
+            ? $order->alamat_laundry
+            : 'Belum/akan ditentukan oleh driver';
 
         $driverInfo = '';
         if ($order->current_driver_id && $order->currentDriver) {
@@ -306,6 +314,8 @@ class WablasWebhookController extends Controller
 
         return "Status Pesanan *{$order->token}*\n\n"
             . "Nama : {$order->nama}\n"
+            . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
+            . "Alamat Laundry : {$alamatLaundryText}\n"
             . "Status Saat Ini : *{$order->status}*\n"
             . "Foto Pakaian : {$foto}"
             . $driverInfo

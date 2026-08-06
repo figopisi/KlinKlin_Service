@@ -78,19 +78,17 @@ class Order extends Model
 
     protected static function booted()
     {
-        // Notifikasi ke grup driver saat pesanan baru dibuat & belum ada driver
-        // (berlaku untuk SEMUA tipe, apapun status awalnya — Diproses ATAU Dicuci)
         static::created(function (Order $order) {
             if (is_null($order->current_driver_id)) {
                 $groupId = config('services.wablas.driver_group_id');
                 $alamatLaundry = ($order->alamat_laundry && $order->alamat_laundry !== '-')
-                    ? $order->alamat_laundry : '-';
+                    ? $order->alamat_laundry : 'Belum ditentukan customer';
 
                 $message = "Hi Driver KlinKlin! 👋\n"
                     . "Ada pesanan baru masuk, nih.\n\n"
                     . "Kode Pesanan : *{$order->token}*\n"
                     . "Nama Customer : {$order->nama}\n"
-                    . "Tipe Layanan : {$order->jenis_layanan}\n"
+                    . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
                     . "Alamat Jemput : {$order->alamat_customer}\n"
                     . "Alamat Laundry : {$alamatLaundry}\n\n"
                     . "Yuk langsung diambil sebelum keduluan driver lain 🏃\n"
@@ -107,9 +105,14 @@ class Order extends Model
 
                 if ($driver) {
                     $linkCek = "https://klinklin.my.id/pesanan/search?token={$order->token}";
+                    $alamatLaundryText = ($order->alamat_laundry && $order->alamat_laundry !== '-')
+                        ? $order->alamat_laundry
+                        : 'Akan ditentukan oleh driver kami';
 
                     $message = "Halo {$order->nama} 👋\n\n"
                         . "Kabar baik! Pesanan Anda dengan kode *{$order->token}* sudah diambil oleh driver kami dan segera diproses 🚀\n\n"
+                        . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
+                        . "Alamat Laundry : {$alamatLaundryText}\n\n"
                         . "🛵 Driver: {$driver->name}\n"
                         . "📞 Kontak Driver: {$driver->phone}\n\n"
                         . "Pantau pesanan Anda di sini:\n{$linkCek}\n\n"
@@ -119,11 +122,11 @@ class Order extends Model
                 }
             }
 
-            // Notifikasi: pesanan selesai — titik "selesai" berbeda tergantung tipe layanan
+            // Notifikasi: pesanan selesai
             if ($order->isDirty('status')) {
                 $statusSelesai = match ($order->tipe_antar_jemput) {
-                    'Antar Saja' => 'Selesai',  // tidak ada tahap "Diantar" untuk tipe ini
-                    default      => 'Diantar',  // Antar Jemput (PP) & Jemput Saja
+                    'Antar Saja' => 'Selesai',
+                    default      => 'Diantar',
                 };
 
                 if ($order->status === $statusSelesai) {
@@ -133,9 +136,14 @@ class Order extends Model
                         : '';
 
                     $linkCek = "https://klinklin.my.id/pesanan/search?token={$order->token}";
+                    $alamatLaundryText = ($order->alamat_laundry && $order->alamat_laundry !== '-')
+                        ? $order->alamat_laundry
+                        : '-';
 
                     $message = "Halo {$order->nama} 👋\n\n"
                         . "Pesanan laundry Anda dengan kode *{$order->token}* sudah selesai kami proses ✅\n\n"
+                        . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
+                        . "Alamat Laundry : {$alamatLaundryText}\n\n"
                         . $driverInfo
                         . "Cek detail pesanan Anda di sini:\n{$linkCek}\n\n"
                         . "Terima kasih telah menggunakan layanan kami! 🙏";

@@ -109,6 +109,10 @@ class WablasWebhookController extends Controller
                 . "2. Antar Saja\n"
                 . "3. Jemput Saja\n\n"
                 . "Balas dengan angka (1/2/3)"
+                . "📌 Penjelasan:\n"
+                . "1. *Antar Jemput* — Kami jemput pakaian Anda, cucikan, lalu antar kembali ke alamat Anda.\n"
+                . "2. *Antar Saja* — Anda antar sendiri pakaian ke laundry, driver kami antar kembali ke alamat Anda setelah selesai.\n"
+                . "3. *Jemput Saja* — Kami jemput pakaian Anda dan antarkan ke laundry pilihan Anda, Anda ambil sendiri di sana."
             );
         }
     }
@@ -199,8 +203,12 @@ class WablasWebhookController extends Controller
         $this->saveData($session, 'alamat_laundry', $kosong ? '' : $text);
         $session->update(['step' => 'tanya_catatan']);
 
-        return "Ada catatan tambahan untuk pesanan Anda?\n\n"
-             . "Jika tidak ada, balas *tidak*.";
+        return "Terakhir, mohon berikan catatan untuk driver dan laundry ya 🙏\n\n"
+            . "Boleh mencakup:\n"
+            . "• Waktu penjemputan yang diinginkan\n"
+            . "• Jenis jasa laundry (cuci saja, setrika saja, cuci+setrika, dry clean, dll)\n"
+            . "• Instruksi khusus lainnya\n\n"
+            . "Jika tidak ada catatan tambahan, balas *tidak*.";
     }
 
     protected function handleTanyaCatatan(ChatSession $session, string $text): string
@@ -238,7 +246,7 @@ class WablasWebhookController extends Controller
             default        => 'Antar Jemput (PP)',
         };
 
-        $status = $tipeAntarJemput === 'Jemput Saja' ? 'Dicuci' : 'Diproses';
+        $status = 'Unconfirmed';
 
         try {
             $order = Order::create([
@@ -276,17 +284,18 @@ class WablasWebhookController extends Controller
         $session->update(['step' => 'menu', 'jenis_layanan' => null, 'data' => null]);
 
         $linkCek = "https://klinklin.my.id/pesanan/search?token={$order->token}";
-$alamatLaundryText = ($order->alamat_laundry && $order->alamat_laundry !== '-')
-    ? $order->alamat_laundry
-    : 'Akan ditentukan oleh driver kami';
+        $alamatLaundryText = ($order->alamat_laundry && $order->alamat_laundry !== '-')
+            ? $order->alamat_laundry
+            : 'Akan ditentukan oleh driver kami';
 
-return "Pesanan Anda berhasil dibuat! ✅\n\n"
-     . "Kode Pesanan : *{$order->token}*\n"
-     . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
-     . "Alamat Laundry : {$alamatLaundryText}\n\n"
-     . "Simpan kode ini untuk cek status pesanan Anda kapan saja.\n\n"
-     . "Pantau pesanan Anda di sini:\n{$linkCek}\n\n"
-     . "Terima kasih telah menggunakan layanan kami! 🙏";
+        return "Pesanan Anda berhasil diterima! ✅\n\n"
+            . "Kode Pesanan : *{$order->token}*\n"
+            . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
+            . "Alamat Laundry : {$alamatLaundryText}\n\n"
+            . "Pesanan Anda sedang kami konfirmasi, mohon tunggu ya 🙏 Anda akan mendapat notifikasi begitu driver kami mengambil pesanan ini.\n\n"
+            . "Simpan kode ini untuk cek status pesanan Anda kapan saja.\n\n"
+            . "Pantau pesanan Anda di sini:\n{$linkCek}\n\n"
+            . "Terima kasih telah menggunakan layanan kami! 🙏";
     }
 
     protected function handleCekStatus(ChatSession $session, string $text): string
@@ -299,7 +308,6 @@ return "Pesanan Anda berhasil dibuat! ✅\n\n"
             return "Kode pesanan *{$text}* tidak ditemukan. Mohon cek kembali kode Anda 🙏";
         }
 
-        $foto = $order->dokumentasi_pakaian ?: '-';
         $alamatLaundryText = ($order->alamat_laundry && $order->alamat_laundry !== '-')
             ? $order->alamat_laundry
             : 'Belum/akan ditentukan oleh driver';
@@ -310,6 +318,17 @@ return "Pesanan Anda berhasil dibuat! ✅\n\n"
                         . "\nKontak Driver : {$order->currentDriver->phone}";
         }
 
+        $totalFee = ($order->fee ?? 0) + ($order->fee_laundry ?? 0);
+        $feeInfo = "\nFee Jasa : Rp " . number_format($order->fee ?? 0, 0, ',', '.')
+                . "\nFee Laundry : Rp " . number_format($order->fee_laundry ?? 0, 0, ',', '.')
+                . "\nTotal Fee : Rp " . number_format($totalFee, 0, ',', '.');
+
+        $estimasi = $order->estimasi_waktu_pengerjaan ?? '-';
+
+        $dokumentasiInfo = !empty($order->dokumentasi_pakaian)
+            ? "\n📸 Dokumentasi Pakaian:\n{$order->dokumentasi_pakaian}"
+            : '';
+
         $linkCek = "https://klinklin.my.id/pesanan/search?token={$order->token}";
 
         return "Status Pesanan *{$order->token}*\n\n"
@@ -317,8 +336,10 @@ return "Pesanan Anda berhasil dibuat! ✅\n\n"
             . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
             . "Alamat Laundry : {$alamatLaundryText}\n"
             . "Status Saat Ini : *{$order->status}*\n"
-            . "Foto Pakaian : {$foto}"
+            . "Estimasi Waktu Pengerjaan : {$estimasi}"
+            . $dokumentasiInfo
             . $driverInfo
+            . $feeInfo
             . "\n\nPantau pesanan Anda lebih detail di sini:\n{$linkCek}";
     }
 

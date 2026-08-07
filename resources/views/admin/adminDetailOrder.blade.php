@@ -516,6 +516,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Estimasi Waktu Pengerjaan</label>
+                    <input type="text"
+                        name="estimasi_waktu_pengerjaan"
+                        value="{{ old('estimasi_waktu_pengerjaan', $order->estimasi_waktu_pengerjaan) }}"
+                        placeholder="Contoh: 1-2 hari">
+                </div>
+
+                <div class="form-group">
                     <label>Menggunakan Jasa Pemilahan Pakaian</label>
                     <select name="is_sorted">
                         @php $isSorted = old('is_sorted', $order->is_sorted); @endphp
@@ -544,6 +552,14 @@
                     <input type="number"
                            name="fee"
                            value="{{ old('fee', $order->fee) }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Fee Laundry</label>
+                    <input type="number"
+                        name="fee_laundry"
+                        value="{{ old('fee_laundry', $order->fee_laundry) }}"
+                        placeholder="Contoh: 25000">
                 </div>
 
                 <div class="form-group">

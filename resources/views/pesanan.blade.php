@@ -108,24 +108,19 @@
     position: relative;
     background: #fff;
     border-radius: 28px;
-    padding: 30px;
+    padding: 26px 24px;
     box-shadow: 0 14px 34px rgba(31,50,78,.10);
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     border: 1px solid rgba(72,115,180,.10);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 26px 36px;
     transition: transform .3s var(--ease), box-shadow .3s var(--ease);
 }
 .pesanan-card:hover { transform: translateY(-4px); box-shadow: 0 22px 46px rgba(31,50,78,.16); }
 
-.order-left, .order-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-
 /* Status tag — WARNA TIDAK DIUBAH, hanya posisi/font menyesuaikan kartu baru */
 .status-tag {
     position: absolute;
-    top: 24px;
-    right: 24px;
+    top: 22px;
+    right: 22px;
     padding: 5px 14px;
     border-radius: 999px;
     font-size: 11px;
@@ -140,18 +135,30 @@
 .status-diantar  { background: #d1fae5; color: #065f46; }
 .status-selesai  { background: #dcfce7; color: #15803d; }
 
-.pesanan-head { grid-column: 1 / -1; margin-bottom: 6px; }
-.order-token { font-size: 26px; font-weight: 800; color: var(--navy); letter-spacing: 2px; margin-bottom: 4px; }
-.order-customer-name { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 0; }
+.pesanan-head { margin-bottom: 18px; padding-right: 90px; }
+.order-token { font-size: 22px; font-weight: 800; color: var(--navy); letter-spacing: 1.5px; margin-bottom: 3px; }
+.order-customer-name { font-size: 15.5px; font-weight: 700; color: rgba(31,50,78,.65); margin-bottom: 0; }
 
-.detail-item { background: rgba(72,115,180,.06); border-radius: 16px; padding: 14px 16px; }
+/* ===== Grid compact — field pendek berdampingan, field panjang full-width ===== */
+.pesanan-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px 12px;
+}
+.detail-item {
+    background: rgba(72,115,180,.06);
+    border-radius: 14px;
+    padding: 10px 13px;
+    min-width: 0;
+}
+.detail-item.span-2 { grid-column: 1 / -1; }
 .detail-item strong {
-    display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .4px; color: rgba(31,50,78,.5); margin-bottom: 6px;
+    display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .4px; color: rgba(31,50,78,.5); margin-bottom: 4px;
 }
 .detail-item span {
-    display: block; font-size: 14.5px; font-weight: 600; color: var(--navy);
-    line-height: 1.5; word-break: break-word;
+    display: block; font-size: 13.5px; font-weight: 600; color: var(--navy);
+    line-height: 1.45; word-break: break-word;
 }
 
 .documentation-section { margin-top: 4px; }
@@ -162,6 +169,31 @@
     transition: transform .2s var(--ease), box-shadow .2s var(--ease);
 }
 .doc-link:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(102,156,242,.4); }
+
+/* ===== Fee summary — gaya struk: rincian dulu, total di bawah ===== */
+.fee-summary {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+    background: linear-gradient(180deg, rgba(102,156,242,.08) 0%, rgba(72,115,180,.10) 100%);
+    border: 1.5px solid rgba(72,115,180,.20);
+    border-radius: 18px;
+    padding: 16px 18px;
+}
+.fee-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; font-size: 13px; font-weight: 600; color: rgba(31,50,78,.7);
+}
+.fee-row span:last-child { font-weight: 700; color: var(--navy); }
+.fee-divider { border: none; border-top: 1.5px dashed rgba(72,115,180,.3); margin: 8px 0; }
+.fee-total-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 2px;
+}
+.fee-total-row strong {
+    font-size: 12.5px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .4px; color: var(--navy);
+}
+.fee-total-amount { font-size: 20px; font-weight: 800; color: var(--navy); }
 
 /* ================= FOTO BUKTI (COLLAPSIBLE) ================= */
 .foto-section {
@@ -264,7 +296,6 @@
 /* ================= RESPONSIF ================= */
 @media (max-width: 768px) {
     .cek-page { padding: 34px 18px 70px; }
-    .pesanan-card { grid-template-columns: 1fr; padding: 24px; }
     .cek-search { flex-direction: column; }
     .driver-detail-grid { grid-template-columns: 1fr; }
     .driver-header { padding-right: 0; flex-wrap: wrap; }
@@ -273,6 +304,14 @@
     .foto-body-inner { grid-template-columns: repeat(auto-fill, minmax(130px, 160px)); }
     .blob.cek-blob-1 { width: 180px; height: 180px; top: -40px; right: -50px; }
     .blob.cek-blob-2 { width: 150px; height: 150px; bottom: -50px; left: -50px; }
+}
+
+@media (max-width: 640px) {
+    .pesanan-card { padding: 20px 18px; }
+    .pesanan-body { grid-template-columns: repeat(2, 1fr); gap: 8px 10px; }
+    .detail-item { padding: 9px 11px; }
+    .detail-item span { font-size: 13px; }
+    .fee-total-amount { font-size: 18px; }
 }
 </style>
 
@@ -334,6 +373,8 @@
                 $fotoNota        = $order->photos->where('type', 'nota')->first();
                 $fotoPengiriman  = $order->photos->where('type', 'pengiriman')->first();
                 $adaFoto         = $fotoPengambilan || $fotoNota || $fotoPengiriman;
+
+                $totalFee = ($order->fee ?? 0) + ($order->fee_laundry ?? 0);
             @endphp
 
             <div class="pesanan-card">
@@ -348,52 +389,11 @@
                     <div class="order-customer-name">{{ $order->nama }}</div>
                 </div>
 
-                <div class="order-left">
-
-                    <div class="detail-item">
-                        <strong data-i18n="customer_address">Alamat Customer</strong>
-                        <span>{{ $order->alamat_customer }}</span>
-                    </div>
+                <div class="pesanan-body">
 
                     <div class="detail-item">
                         <strong data-i18n="customer_phone">Phone Customer</strong>
                         <span>{{ $order->phone }}</span>
-                    </div>
-
-                    <div class="detail-item">
-                        <strong data-i18n="total_fee">Fee (harga total)</strong>
-                        <span>Rp {{ number_format($order->fee, 0, ',', '.') }}</span>
-                    </div>
-
-                    <div class="detail-item">
-                        <strong data-i18n="notes">Catatan</strong>
-                        <span>{{ $order->note ?? '-' }}</span>
-                    </div>
-
-                    @if($order->is_sorted)
-                    <div class="detail-item">
-                        <strong data-i18n="clothing_documentation">Dokumentasi Pakaian</strong>
-
-                        @if($order->dokumentasi_pakaian)
-                            <a href="{{ $order->dokumentasi_pakaian }}"
-                               target="_blank"
-                               class="doc-link"
-                               data-i18n="view_documentation">
-                                Lihat Dokumentasi
-                            </a>
-                        @else
-                            <span>-</span>
-                        @endif
-                    </div>
-                    @endif
-
-                </div>
-
-                <div class="order-right">
-
-                    <div class="detail-item">
-                        <strong data-i18n="laundry_address">Alamat Laundry</strong>
-                        <span>{{ $order->alamat_laundry }}</span>
                     </div>
 
                     <div class="detail-item">
@@ -407,19 +407,24 @@
                     </div>
 
                     <div class="detail-item">
-                        <strong data-i18n="estimated_laundry">Estimasi Jumlah Laundry</strong>
+                        <strong data-i18n="estimated_laundry">Estimasi Jumlah</strong>
                         <span>{{ $order->estimasi_jumlah_laundry ?? '-' }}</span>
                     </div>
 
                     <div class="detail-item">
-                        <strong data-i18n="clothing_sorted">Pemilahan Pakaian</strong>
+                        <strong data-i18n="estimated_duration">Estimasi Waktu</strong>
+                        <span>{{ $order->estimasi_waktu_pengerjaan ?? '-' }}</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong data-i18n="clothing_sorted">Pemilahan</strong>
                         <span data-boolean="{{ $order->is_sorted ? 'true' : 'false' }}">
                             {{ $order->is_sorted ? 'Ya' : 'Tidak' }}
                         </span>
                     </div>
 
                     <div class="detail-item">
-                        <strong data-i18n="pickup_date">Tanggal Penjemputan</strong>
+                        <strong data-i18n="pickup_date">Tgl Penjemputan</strong>
                         <span>
                             {{ $order->tanggal_penjemputan
                                 ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->format('d M Y H:i')
@@ -428,8 +433,52 @@
                     </div>
 
                     <div class="detail-item">
-                        <strong data-i18n="order_date">Tanggal Pesanan</strong>
+                        <strong data-i18n="order_date">Tgl Pesanan</strong>
                         <span>{{ $order->created_at->format('d M Y H:i') }}</span>
+                    </div>
+
+                    <div class="detail-item span-2">
+                        <strong data-i18n="customer_address">Alamat Customer</strong>
+                        <span>{{ $order->alamat_customer }}</span>
+                    </div>
+
+                    <div class="detail-item span-2">
+                        <strong data-i18n="laundry_address">Alamat Laundry</strong>
+                        <span>{{ $order->alamat_laundry }}</span>
+                    </div>
+
+                    <div class="detail-item span-2">
+                        <strong data-i18n="notes">Catatan</strong>
+                        <span>{{ $order->note ?? '-' }}</span>
+                    </div>
+
+                    @if($order->is_sorted && $order->dokumentasi_pakaian)
+                    <div class="detail-item span-2 documentation-section">
+                        <strong data-i18n="clothing_documentation">Dokumentasi Pakaian</strong>
+                        <a href="{{ $order->dokumentasi_pakaian }}"
+                           target="_blank"
+                           class="doc-link"
+                           data-i18n="view_documentation">
+                            Lihat Dokumentasi
+                        </a>
+                    </div>
+                    @endif
+
+                    {{-- FEE — gaya struk: rincian dulu, total di bawah --}}
+                    <div class="fee-summary">
+                        <div class="fee-row">
+                            <span data-i18n="service_fee">Fee Jasa</span>
+                            <span>Rp {{ number_format($order->fee, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="fee-row">
+                            <span data-i18n="laundry_fee">Fee Laundry</span>
+                            <span>Rp {{ number_format($order->fee_laundry ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                        <hr class="fee-divider">
+                        <div class="fee-total-row">
+                            <strong data-i18n="total_fee">Total Fee</strong>
+                            <span class="fee-total-amount">Rp {{ number_format($totalFee, 0, ',', '.') }}</span>
+                        </div>
                     </div>
 
                 </div>
@@ -484,7 +533,17 @@
             </div>
             @endif
 
-            @if($order->driverLogs->count())
+            @php
+                // FIX: exclude driver yang sedang aktif dari daftar "driver sebelumnya".
+                // Sebelumnya pakai unique('driver_id') dari SEMUA driverLogs tanpa
+                // exclude current_driver_id, jadi driver aktif yang belum pernah
+                // lepas pesanan tetap ikut muncul dobel di section "Driver Sebelumnya".
+                $driverSebelumnya = $order->driverLogs
+                    ->where('driver_id', '!=', $order->current_driver_id)
+                    ->sortByDesc('taken_at')
+                    ->unique('driver_id');
+            @endphp
+            @if($order->currentDriver || $driverSebelumnya->count())
             <div class="driver-section">
 
                 <div class="driver-section-title" data-i18n="driver_information">
@@ -527,7 +586,7 @@
                     </div>
                     @endif
 
-                    @foreach($order->driverLogs->sortByDesc('taken_at')->unique('driver_id') as $log)
+                    @foreach($driverSebelumnya as $log)
                     <div class="driver-card old">
 
                         <div class="driver-badge old" data-i18n="previous_driver">

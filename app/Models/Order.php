@@ -34,6 +34,8 @@ class Order extends Model
         'tipe_antar_jemput',
         'jarak_km',
         'rincian_fee',
+        'fee_laundry',
+        'estimasi_waktu_pengerjaan',
     ];
 
     protected $casts = [
@@ -78,8 +80,35 @@ class Order extends Model
 
     protected static function booted()
     {
+        // Order baru dari bot selalu 'Unconfirmed' -> notif ke grup ADMIN dulu, bukan driver
         static::created(function (Order $order) {
-            if (is_null($order->current_driver_id)) {
+            if ($order->status === 'Unconfirmed') {
+                $groupId = config('services.wablas.admin_group_id');
+                $alamatLaundry = ($order->alamat_laundry && $order->alamat_laundry !== '-')
+                    ? $order->alamat_laundry : 'Belum ditentukan customer';
+
+                $message = "🔔 *PESANAN BARU PERLU KONFIRMASI*\n\n"
+                    . "Kode Pesanan : *{$order->token}*\n"
+                    . "Nama Customer : {$order->nama}\n"
+                    . "No. WA : {$order->phone}\n"
+                    . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
+                    . "Alamat Jemput : {$order->alamat_customer}\n"
+                    . "Alamat Laundry : {$alamatLaundry}\n"
+                    . "Catatan : " . ($order->note ?: '-') . "\n\n"
+                    . "Mohon segera cek & konfirmasi pesanan ini di dashboard admin 🙏";
+
+                app(WablasService::class)->sendGroupText($groupId, $message);
+            }
+        });
+
+        static::updated(function (Order $order) {
+            // Notifikasi ke grup DRIVER, hanya setelah admin konfirmasi
+            // (transisi dari 'Unconfirmed' ke status aktif apapun, dan belum ada driver)
+            if (
+                $order->isDirty('status')
+                && $order->getOriginal('status') === 'Unconfirmed'
+                && is_null($order->current_driver_id)
+            ) {
                 $groupId = config('services.wablas.driver_group_id');
                 $alamatLaundry = ($order->alamat_laundry && $order->alamat_laundry !== '-')
                     ? $order->alamat_laundry : 'Belum ditentukan customer';
@@ -96,9 +125,7 @@ class Order extends Model
 
                 app(WablasService::class)->sendGroupText($groupId, $message);
             }
-        });
 
-        static::updated(function (Order $order) {
             // Notifikasi: driver baru saja mengambil pesanan
             if ($order->isDirty('current_driver_id') && $order->current_driver_id !== null) {
                 $driver = $order->currentDriver;
@@ -115,6 +142,7 @@ class Order extends Model
                         . "Alamat Laundry : {$alamatLaundryText}\n\n"
                         . "🛵 Driver: {$driver->name}\n"
                         . "📞 Kontak Driver: {$driver->phone}\n\n"
+                        . "Silakan tunggu driver menghubungi Anda ya. Jika ada perubahan waktu penjemputan atau hal lainnya, mohon konfirmasi langsung ke driver 🙏\n\n"
                         . "Pantau pesanan Anda di sini:\n{$linkCek}\n\n"
                         . "Terima kasih telah menggunakan layanan kami! 🙏";
 
@@ -140,11 +168,23 @@ class Order extends Model
                         ? $order->alamat_laundry
                         : '-';
 
+                    $totalFee = ($order->fee ?? 0) + ($order->fee_laundry ?? 0);
+                    $feeInfo = "Fee Jasa : Rp " . number_format($order->fee ?? 0, 0, ',', '.') . "\n"
+                            . "Fee Laundry : Rp " . number_format($order->fee_laundry ?? 0, 0, ',', '.') . "\n"
+                            . "Total Fee : Rp " . number_format($totalFee, 0, ',', '.') . "\n\n";
+
+                    $dokumentasiInfo = '';
+                    if (!empty($order->dokumentasi_pakaian)) {
+                        $dokumentasiInfo = "📸 Dokumentasi Pakaian Anda:\n{$order->dokumentasi_pakaian}\n\n";
+                    }
+
                     $message = "Halo {$order->nama} 👋\n\n"
                         . "Pesanan laundry Anda dengan kode *{$order->token}* sudah selesai kami proses ✅\n\n"
                         . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
                         . "Alamat Laundry : {$alamatLaundryText}\n\n"
                         . $driverInfo
+                        . $feeInfo
+                        . $dokumentasiInfo
                         . "Cek detail pesanan Anda di sini:\n{$linkCek}\n\n"
                         . "Terima kasih telah menggunakan layanan kami! 🙏";
 

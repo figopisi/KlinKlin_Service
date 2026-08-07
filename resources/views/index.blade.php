@@ -32,7 +32,8 @@
 
         <span class="cta-deco" aria-hidden="true"></span>
 
-        <a href="{{ route('buat-pesanan') }}" class="cta reveal" data-reveal="up" style="--delay:.4s">
+        <a href="https://wa.me/6282236405141?text={{ urlencode('Halo, saya mau pesan laundry via wa') }}" 
+        class="cta reveal" data-reveal="up" style="--delay:.4s" target="_blank" rel="noopener">
             <span data-i18n="cta">Pesan Sekarang</span>
             <span class="cta-arrow">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -184,7 +185,8 @@
                         <span data-i18n="why_order">Ayo Order Sekarang</span>
                         <span class="why-order-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F324E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
                     </div>
-                    <a href="{{ route('buat-pesanan') }}" class="why-cta">
+                    <a href="https://wa.me/6282236405141?text={{ urlencode('Halo, saya mau pesan laundry via aplikasi 🙏') }}" 
+                    class="why-cta" target="_blank" rel="noopener">
                         <span class="why-cta-circle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F324E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
                         <span class="txt" data-i18n="cta">Pesan Sekarang</span>
                     </a>

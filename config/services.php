@@ -40,6 +40,7 @@ return [
         'token'    => env('WABLAS_TOKEN'),
         'secret'   => env('WABLAS_SECRET_KEY'),
         'driver_group_id' => env('WABLAS_DRIVER_GROUP_ID'),
+        'admin_group_id'  => env('WABLAS_ADMIN_GROUP_ID'),
     ],
 
 ];

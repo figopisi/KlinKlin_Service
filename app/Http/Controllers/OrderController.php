@@ -178,6 +178,8 @@ class OrderController extends Controller
             'phone_laundry'           => 'nullable|string|max:20',
             'status'                  => 'required|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
             'fee'                     => 'required|numeric',
+            'fee_laundry'               => 'nullable|numeric|min:0',        // ✅ baru
+            'estimasi_waktu_pengerjaan' => 'nullable|string|max:100',       // ✅ baru
             'note'                    => 'nullable|string',
             'dokumentasi_pakaian'     => 'nullable|string',
             'is_sorted'               => 'nullable',

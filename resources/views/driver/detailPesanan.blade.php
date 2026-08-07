@@ -55,12 +55,34 @@
         z-index: 5;
     }
 
+    /* ---- TOAST (pengganti alert yang bikin layar loncat) ---- */
+    .d-toast-holder{
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 300;
+        width: calc(100% - 36px);
+        max-width: 604px;
+        pointer-events: none;
+    }
     .d-alert{
         padding: 13px 16px;
         border-radius: 14px;
         font-size: 13.5px;
         font-weight: 600;
-        margin-bottom: 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 10px 26px rgba(31,50,78,.20);
+        animation: d-toast-in .25s ease, d-toast-out .3s ease 3.2s forwards;
+        pointer-events: auto;
+    }
+    @keyframes d-toast-in{
+        from{ opacity: 0; transform: translateY(-10px); }
+        to{ opacity: 1; transform: translateY(0); }
+    }
+    @keyframes d-toast-out{
+        from{ opacity: 1; transform: translateY(0); }
+        to{ opacity: 0; transform: translateY(-10px); }
     }
     .d-alert-success{ background: #E4F7EB; color: #1F8A4C; }
     .d-alert-error{ background: #FDECEC; color: #C0392B; }
@@ -81,6 +103,47 @@
     .d-banner.readonly{ background: #EEF3FC; color: var(--blue); border: 1px solid #D7E3F7; }
     .d-banner.warn{ background: #FFF7E0; color: #8A6D1F; border: 1px solid #F5E1A0; }
     .d-banner.tipe{ background: #EFEBFB; color: #5B3FA3; border: 1px solid #DCD1F5; }
+
+    /* ---- TABS ---- */
+    .d-tabs{
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .d-tabbtn{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 14px 8px;
+        border-radius: 16px;
+        background: #fff;
+        border: 1.5px solid #EEF1F6;
+        box-shadow: 0 6px 16px rgba(31,50,78,.06);
+        cursor: pointer;
+        font-family: inherit;
+        transition: border-color .2s var(--ease), background .2s var(--ease), transform .2s var(--ease);
+    }
+    .d-tabbtn:active{ transform: scale(.97); }
+    .d-tabbtn .d-tabbtn-icon{ font-size: 20px; line-height: 1; }
+    .d-tabbtn .d-tabbtn-label{
+        font-size: 11.5px;
+        font-weight: 700;
+        color: rgba(14,23,38,.55);
+        text-align: center;
+    }
+    .d-tabbtn.active{
+        background: linear-gradient(263deg, #669CF2 0%, #3B5A8C 100%);
+        border-color: transparent;
+        box-shadow: 0 10px 22px rgba(102,156,242,.30);
+    }
+    .d-tabbtn.active .d-tabbtn-label{ color: #fff; }
+
+    /* ---- TAB PANELS ---- */
+    .d-tabpanel{ display: none; }
+    .d-tabpanel.active{ display: block; }
 
     /* ---- CARD ---- */
     .d-card{
@@ -209,7 +272,7 @@
         text-decoration: none;
     }
 
-    .d-submit-wrap{ margin-top: 4px; }
+    .d-submit-wrap{ margin-top: 4px; margin-bottom: 16px; }
 
     /* ---- BUTTONS ---- */
     .d-btn{
@@ -403,14 +466,17 @@
     <h1>Detail Pesanan</h1>
 </div>
 
-<div class="d-wrap">
-
+{{-- TOAST NOTIF: fixed di atas layar, tidak mendorong konten sehingga tidak ada lompatan scroll --}}
+<div class="d-toast-holder">
     @if(session('success'))
         <div class="d-alert d-alert-success">✅ {{ session('success') }}</div>
     @endif
     @if(session('error'))
         <div class="d-alert d-alert-error">❌ {{ session('error') }}</div>
     @endif
+</div>
+
+<div class="d-wrap">
 
     {{-- BANNER TIPE ANTAR JEMPUT --}}
     @php
@@ -419,6 +485,9 @@
             'Jemput Saja' => 'Driver hanya perlu mengambil baju dari laundry dan mengantarnya ke customer. Tidak ada tahap penjemputan dari customer.',
             default       => 'Alur lengkap: jemput dari customer → antar ke laundry → jemput dari laundry → antar ke customer.',
         };
+
+        // Kondisi gabungan: form & banner editable tampil jika salah satu flag edit aktif.
+        $adaYangBisaDiedit = $bisaEditJenisLayanan || $bisaEditFeeLaundry || $bisaEditUmum;
     @endphp
     <div class="d-banner tipe">
         🛵 <div>
@@ -428,9 +497,9 @@
     </div>
 
     {{-- BANNER INFO MODE --}}
-    @if($bisaEdit)
+    @if($adaYangBisaDiedit)
         <div class="d-banner editable">
-            ✏️ Kamu bisa mengubah field berlatar kuning karena pesanan sedang berstatus Dijemput atau mencari Laundry.
+            ✏️ Field berlatar kuning bisa diubah sesuai status pesanan saat ini. Alamat laundry & fee jasa hanya bisa diubah admin.
         </div>
     @else
         <div class="d-banner readonly">
@@ -446,124 +515,171 @@
     @endif
 
     {{-- ========================= --}}
-    {{-- FORM DETAIL               --}}
+    {{-- TAB NAV: Customer / Order / Foto Bukti --}}
     {{-- ========================= --}}
-    @if($bisaEdit)
+    <div class="d-tabs">
+        <button type="button" class="d-tabbtn active" data-tab="tabCustomer" onclick="switchTab('tabCustomer', this)">
+            <span class="d-tabbtn-icon">👤</span>
+            <span class="d-tabbtn-label">Customer</span>
+        </button>
+        <button type="button" class="d-tabbtn" data-tab="tabOrder" onclick="switchTab('tabOrder', this)">
+            <span class="d-tabbtn-icon">📦</span>
+            <span class="d-tabbtn-label">Order</span>
+        </button>
+        <button type="button" class="d-tabbtn" data-tab="tabFoto" onclick="switchTab('tabFoto', this)">
+            <span class="d-tabbtn-icon">📷</span>
+            <span class="d-tabbtn-label">Foto Bukti</span>
+        </button>
+    </div>
+
+    {{-- ========================= --}}
+    {{-- FORM DETAIL (bungkus tab Customer & Order karena field yang bisa diedit ada di sini) --}}
+    {{-- ========================= --}}
+    @if($adaYangBisaDiedit)
     <form method="POST" action="{{ route('driver.pesanan.update', $order->id) }}">
         @csrf
     @endif
 
-        <div class="d-card">
-            <div class="d-card-title">👤 Customer</div>
-            <div class="d-field">
-                <label>Nama</label>
-                <input type="text" value="{{ $order->nama }}" readonly>
-            </div>
-            <div class="d-field">
-                <label>Phone</label>
-                <input type="text" value="{{ $order->phone }}" readonly>
-            </div>
-            <div class="d-field">
-                <label>Alamat Customer</label>
-                <textarea readonly>{{ $order->alamat_customer }}</textarea>
-            </div>
+        {{-- ===== TAB: CUSTOMER ===== --}}
+        <div class="d-tabpanel active" id="tabCustomer">
+            <div class="d-card">
+                <div class="d-card-title">👤 Customer</div>
+                <div class="d-field">
+                    <label>Nama</label>
+                    <input type="text" value="{{ $order->nama }}" readonly>
+                </div>
+                <div class="d-field">
+                    <label>Phone</label>
+                    <input type="text" value="{{ $order->phone }}" readonly>
+                </div>
+                <div class="d-field">
+                    <label>Alamat Customer</label>
+                    <textarea readonly>{{ $order->alamat_customer }}</textarea>
+                </div>
 
-            <div class="d-card-title">🧺 Laundry</div>
-            <div class="d-field">
-                @if($bisaEdit)
-                    <label>Alamat Laundry <span class="editable-badge">bisa diubah</span></label>
-                    <textarea name="alamat_laundry" class="editable">{{ $order->alamat_laundry }}</textarea>
-                    @error('alamat_laundry') <div class="d-err">{{ $message }}</div> @enderror
-                @else
-                    <label>Alamat Laundry</label>
+                <div class="d-card-title">🧺 Laundry</div>
+                <div class="d-field">
+                    <label>Alamat Laundry <span class="locked-badge">🔒 hanya admin</span></label>
                     <textarea readonly>{{ $order->alamat_laundry }}</textarea>
-                @endif
-            </div>
-            <div class="d-field">
-                @if($bisaEdit)
-                    <label>Phone Laundry <span class="editable-badge">bisa diubah</span></label>
-                    <input type="text" name="phone_laundry" value="{{ $order->phone_laundry }}" class="editable">
-                    @error('phone_laundry') <div class="d-err">{{ $message }}</div> @enderror
-                @else
-                    <label>Phone Laundry</label>
-                    <input type="text" value="{{ $order->phone_laundry }}" readonly>
-                @endif
-            </div>
-        </div>
-
-        <div class="d-card">
-            <div class="d-card-title">📦 Order</div>
-            <div class="d-field">
-                <label>Token</label>
-                <input type="text" value="{{ $order->token }}" readonly>
-            </div>
-            <div class="d-field">
-                <label>Status</label><br>
-                <span class="d-status-inline d-status-{{ str_replace(' ', '-', $order->status) }}">{{ $order->status }}</span>
-            </div>
-            <div class="d-field">
-                <label>Tipe Antar Jemput <span class="locked-badge">🔒 tidak bisa diubah</span></label>
-                <input type="text" value="{{ $order->tipe_antar_jemput }}" readonly>
-            </div>
-            <div class="d-field">
-                <label>Jenis Layanan</label>
-                <input type="text" value="{{ $order->jenis_layanan ?? '-' }}" readonly>
-            </div>
-            <div class="d-field">
-                @if($bisaEdit)
-                    <label>Estimasi Jumlah Laundry <span class="editable-badge">bisa diubah</span></label>
-                    <input type="text" name="estimasi_jumlah_laundry"
-                           value="{{ $order->estimasi_jumlah_laundry }}"
-                           class="editable" placeholder="Contoh: 5 kg">
-                    @error('estimasi_jumlah_laundry') <div class="d-err">{{ $message }}</div> @enderror
-                @else
-                    <label>Estimasi Jumlah Laundry</label>
-                    <input type="text" value="{{ $order->estimasi_jumlah_laundry ?? '-' }}" readonly>
-                @endif
-            </div>
-            <div class="d-field">
-                <label>Pemilahan Pakaian</label>
-                <input type="text" value="{{ $order->is_sorted ? 'Ya' : 'Tidak' }}" readonly>
-            </div>
-            <div class="d-field">
-                <label>Catatan</label>
-                <textarea readonly>{{ $order->note ?? '-' }}</textarea>
-            </div>
-            <div class="d-field">
-                <label>Tanggal Penjemputan</label>
-                <input type="text"
-                       value="{{ $order->tanggal_penjemputan ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->translatedFormat('d F Y - H:i') : '-' }}"
-                       readonly>
-            </div>
-            <div class="d-field">
-                @if($bisaEdit)
-                    <label>Foto Semua Pakaian <span class="editable-badge">bisa diubah</span></label>
-                    <input type="text" name="dokumentasi_pakaian"
-                           value="{{ $order->dokumentasi_pakaian }}"
-                           class="editable" placeholder="Masukkan link dokumentasi">
-                    @error('dokumentasi_pakaian') <div class="d-err">{{ $message }}</div> @enderror
-                @else
-                    <label>Dokumentasi</label>
-                    <input type="text" value="{{ $order->dokumentasi_pakaian ?? '-' }}" readonly>
-                @endif
-                @if($order->dokumentasi_pakaian)
-                    <a href="{{ $order->dokumentasi_pakaian }}" target="_blank" class="d-inline-link">🔗 Lihat Dokumentasi</a>
-                @endif
+                </div>
+                <div class="d-field">
+                    @if($bisaEditUmum)
+                        <label>Phone Laundry <span class="editable-badge">bisa diubah</span></label>
+                        <input type="text" name="phone_laundry" value="{{ $order->phone_laundry }}" class="editable">
+                        @error('phone_laundry') <div class="d-err">{{ $message }}</div> @enderror
+                    @else
+                        <label>Phone Laundry</label>
+                        <input type="text" value="{{ $order->phone_laundry }}" readonly>
+                    @endif
+                </div>
             </div>
         </div>
 
-        @if($bisaEdit)
-        <div class="d-submit-wrap">
+        {{-- ===== TAB: ORDER ===== --}}
+        <div class="d-tabpanel" id="tabOrder">
+            <div class="d-card">
+                <div class="d-card-title">📦 Order</div>
+                <div class="d-field">
+                    <label>Token</label>
+                    <input type="text" value="{{ $order->token }}" readonly>
+                </div>
+                <div class="d-field">
+                    <label>Status</label><br>
+                    <span class="d-status-inline d-status-{{ str_replace(' ', '-', $order->status) }}">{{ $order->status }}</span>
+                </div>
+                <div class="d-field">
+                    <label>Tipe Antar Jemput <span class="locked-badge">🔒 tidak bisa diubah</span></label>
+                    <input type="text" value="{{ $order->tipe_antar_jemput }}" readonly>
+                </div>
+                <div class="d-field">
+                    @if($bisaEditJenisLayanan)
+                        <label>Jenis Layanan <span class="editable-badge">bisa diubah</span></label>
+                        <input type="text" name="jenis_layanan" value="{{ $order->jenis_layanan }}" class="editable">
+                        @error('jenis_layanan') <div class="d-err">{{ $message }}</div> @enderror
+                    @else
+                        <label>Jenis Layanan</label>
+                        <input type="text" value="{{ $order->jenis_layanan ?? '-' }}" readonly>
+                    @endif
+                </div>
+                <div class="d-field">
+                    @if($bisaEditUmum)
+                        <label>Estimasi Jumlah Laundry <span class="editable-badge">bisa diubah</span></label>
+                        <input type="text" name="estimasi_jumlah_laundry"
+                               value="{{ $order->estimasi_jumlah_laundry }}"
+                               class="editable" placeholder="Contoh: 5 kg">
+                        @error('estimasi_jumlah_laundry') <div class="d-err">{{ $message }}</div> @enderror
+                    @else
+                        <label>Estimasi Jumlah Laundry</label>
+                        <input type="text" value="{{ $order->estimasi_jumlah_laundry ?? '-' }}" readonly>
+                    @endif
+                </div>
+                <div class="d-field">
+                    @if($bisaEditUmum)
+                        <label>Estimasi Waktu Pengerjaan <span class="editable-badge">bisa diubah</span></label>
+                        <input type="text" name="estimasi_waktu_pengerjaan"
+                            value="{{ $order->estimasi_waktu_pengerjaan }}"
+                            class="editable" placeholder="Contoh: 1-2 hari">
+                        @error('estimasi_waktu_pengerjaan') <div class="d-err">{{ $message }}</div> @enderror
+                    @else
+                        <label>Estimasi Waktu Pengerjaan</label>
+                        <input type="text" value="{{ $order->estimasi_waktu_pengerjaan ?? '-' }}" readonly>
+                    @endif
+                </div>
+                <div class="d-field">
+                    <label>Pemilahan Pakaian</label>
+                    <input type="text" value="{{ $order->is_sorted ? 'Ya' : 'Tidak' }}" readonly>
+                </div>
+                <div class="d-field">
+                    <label>Catatan</label>
+                    <textarea readonly>{{ $order->note ?? '-' }}</textarea>
+                </div>
+                <div class="d-field">
+                    <label>Tanggal Penjemputan</label>
+                    <input type="text"
+                           value="{{ $order->tanggal_penjemputan ? \Carbon\Carbon::parse($order->tanggal_penjemputan)->translatedFormat('d F Y - H:i') : '-' }}"
+                           readonly>
+                </div>
+                <div class="d-field">
+                    @if($bisaEditUmum)
+                        <label>Foto Semua Pakaian <span class="editable-badge">bisa diubah</span></label>
+                        <input type="text" name="dokumentasi_pakaian"
+                               value="{{ $order->dokumentasi_pakaian }}"
+                               class="editable" placeholder="Masukkan link dokumentasi">
+                        @error('dokumentasi_pakaian') <div class="d-err">{{ $message }}</div> @enderror
+                    @else
+                        <label>Dokumentasi</label>
+                        <input type="text" value="{{ $order->dokumentasi_pakaian ?? '-' }}" readonly>
+                    @endif
+                    @if($order->dokumentasi_pakaian)
+                        <a href="{{ $order->dokumentasi_pakaian }}" target="_blank" class="d-inline-link">🔗 Lihat Dokumentasi</a>
+                    @endif
+                </div>
+                <div class="d-field">
+                    @if($bisaEditFeeLaundry)
+                        <label>Fee Laundry <span class="editable-badge">bisa diubah</span></label>
+                        <input type="text" name="fee_laundry" value="{{ $order->fee_laundry }}"
+                            class="editable" placeholder="Contoh: 25000" inputmode="numeric">
+                        @error('fee_laundry') <div class="d-err">{{ $message }}</div> @enderror
+                    @else
+                        <label>Fee Laundry</label>
+                        <input type="text" value="{{ $order->fee_laundry ?? '-' }}" readonly>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        @if($adaYangBisaDiedit)
+        <div class="d-submit-wrap" id="submitWrapSimpan">
             <button type="submit" class="d-btn d-btn-save">💾 Simpan Perubahan</button>
         </div>
         @endif
 
-    @if($bisaEdit)
+    @if($adaYangBisaDiedit)
     </form>
     @endif
 
     {{-- ========================= --}}
-    {{-- SECTION FOTO BUKTI        --}}
+    {{-- SECTION FOTO BUKTI (TAB)  --}}
     {{-- ========================= --}}
     @php
         $statusOrder     = ['Diproses', 'Dijemput', 'Mencari Laundry', 'Dicuci', 'Diantar', 'Selesai'];
@@ -593,6 +709,7 @@
         $bisaHapusPengiriman = $isCurrentDriver && $statusIndex < array_search('Selesai', $statusOrder);
     @endphp
 
+    <div class="d-tabpanel" id="tabFoto">
     @if($statusIndex >= array_search('Dijemput', $statusOrder))
     <div class="d-card">
         <div class="d-card-title">📷 Foto Bukti</div>
@@ -757,9 +874,10 @@
 
     </div>
     @endif
+    </div>
 
     {{-- ========================= --}}
-    {{-- UPDATE STATUS             --}}
+    {{-- UPDATE STATUS  (TIDAK DIUBAH, tetap selalu tampil di bawah)  --}}
     {{-- ========================= --}}
     @if($isCurrentDriver && $order->status !== 'Selesai')
     @php
@@ -847,8 +965,56 @@
 <script>
     let targetFormId = null;
 
+    /* ---- SWITCH TAB (Customer / Order / Foto Bukti) ---- */
+    function switchTab(tabId, btnEl) {
+        document.querySelectorAll('.d-tabpanel').forEach(panel => panel.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+
+        document.querySelectorAll('.d-tabbtn').forEach(btn => btn.classList.remove('active'));
+        btnEl.classList.add('active');
+
+        // Tombol "Simpan Perubahan" hanya relevan untuk tab Customer & Order,
+        // jadi disembunyikan total saat tab Foto Bukti aktif.
+        const submitWrap = document.getElementById('submitWrapSimpan');
+        if (submitWrap) {
+            submitWrap.style.display = (tabId === 'tabFoto') ? 'none' : '';
+        }
+
+        // Simpan tab aktif supaya tetap di tab yang sama setelah reload (submit/upload).
+        try { sessionStorage.setItem('d-active-tab', tabId); } catch (e) {}
+    }
+
+    /* ---- JAGA POSISI SCROLL supaya tidak "loncat" saat reload
+           setelah update status / simpan perubahan / upload foto ---- */
+    const D_SCROLL_KEY = 'd-scroll-pos-' + window.location.pathname;
+
+    window.addEventListener('beforeunload', function () {
+        try { sessionStorage.setItem(D_SCROLL_KEY, window.scrollY); } catch (e) {}
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Kembalikan tab aktif terakhir.
+        try {
+            const savedTab = sessionStorage.getItem('d-active-tab');
+            if (savedTab && document.getElementById(savedTab)) {
+                const savedBtn = document.querySelector('.d-tabbtn[data-tab="' + savedTab + '"]');
+                if (savedBtn) switchTab(savedTab, savedBtn);
+            }
+        } catch (e) {}
+
+        // Kembalikan posisi scroll terakhir (tanpa animasi, langsung ke posisi).
+        try {
+            const savedPos = sessionStorage.getItem(D_SCROLL_KEY);
+            if (savedPos !== null) {
+                window.scrollTo(0, parseInt(savedPos, 10));
+                sessionStorage.removeItem(D_SCROLL_KEY);
+            }
+        } catch (e) {}
+    });
+
     function autoUpload(input, formId, uploadingId) {
         if (input.files && input.files[0]) {
+            try { sessionStorage.setItem(D_SCROLL_KEY, window.scrollY); } catch (e) {}
             document.getElementById(uploadingId).style.display = 'block';
             document.getElementById(formId).submit();
         }
@@ -889,6 +1055,7 @@
 
     function submitForm(modalId) {
         if (targetFormId) {
+            try { sessionStorage.setItem(D_SCROLL_KEY, window.scrollY); } catch (e) {}
             document.getElementById(targetFormId).submit();
         }
         tutupModal(modalId);
@@ -900,6 +1067,13 @@
                 this.classList.remove('active');
                 targetFormId = null;
             }
+        });
+    });
+
+    // Sembunyikan toast otomatis dari DOM setelah animasi selesai (rapi, tidak menyisakan ruang).
+    document.querySelectorAll('.d-alert').forEach(el => {
+        el.addEventListener('animationend', function(e) {
+            if (e.animationName === 'd-toast-out') el.remove();
         });
     });
 </script>

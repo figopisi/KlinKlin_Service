@@ -48,27 +48,32 @@ class DriverController extends Controller
     public function detail($id)
     {
         $order = Order::with(['driverLogs.driver', 'currentDriver', 'photos'])
-            ->findOrFail($id); // ambil dulu tanpa filter driver
+            ->findOrFail($id);
 
         $driverId = session('driver_id');
 
         $isPemilik         = $order->current_driver_id == $driverId;
         $adaDiLog          = $order->driverLogs->contains('driver_id', $driverId);
-        // kondisi: pesanan tersedia (belum diambil siapapun)
         $isPesananTersedia = is_null($order->current_driver_id)
                             && in_array($order->status, ['Diproses', 'Dicuci']);
 
-        // Tolak jika tidak punya relasi apapun ke pesanan ini
         if (!$isPemilik && !$adaDiLog && !$isPesananTersedia) {
             abort(403, 'Kamu tidak punya akses ke pesanan ini.');
         }
 
-        // Boleh edit field detail (alamat laundry dkk) hanya jika pemilik aktif
-        // DAN status Dijemput / Mencari Laundry. Field tipe_antar_jemput
-        // TIDAK pernah bisa diedit driver — murni ditentukan saat order dibuat.
-        $bisaEdit = $isPemilik && in_array($order->status, ['Dijemput', 'Mencari Laundry']);
+        $statusOrder = ['Diproses', 'Dijemput', 'Mencari Laundry', 'Dicuci', 'Diantar', 'Selesai'];
+        $statusIndex = array_search($order->status, $statusOrder);
+        $dicuciIndex = array_search('Dicuci', $statusOrder);
+        $aktifBelumSelesai = $isPemilik && $order->status !== 'Selesai';
 
-        return view('driver.detailPesanan', compact('order', 'bisaEdit'));
+        // ✅ Flag per-field, menggantikan $bisaEdit tunggal yang lama.
+        $bisaEditJenisLayanan = $aktifBelumSelesai && $statusIndex < $dicuciIndex;
+        $bisaEditFeeLaundry   = $aktifBelumSelesai && $statusIndex >= $dicuciIndex;
+        $bisaEditUmum         = $aktifBelumSelesai; // dokumentasi, berat, phone laundry, waktu pengerjaan
+
+        return view('driver.detailPesanan', compact(
+            'order', 'bisaEditJenisLayanan', 'bisaEditFeeLaundry', 'bisaEditUmum'
+        ));
     }
 
     // ================= UPDATE OLEH DRIVER (terbatas) =================
@@ -77,9 +82,9 @@ class DriverController extends Controller
     {
         $order = Order::where(function($q) {
                 $q->where('current_driver_id', session('driver_id'))
-                  ->orWhereHas('driverLogs', function($q2) {
-                      $q2->where('driver_id', session('driver_id'));
-                  });
+                ->orWhereHas('driverLogs', function($q2) {
+                    $q2->where('driver_id', session('driver_id'));
+                });
             })
             ->findOrFail($id);
 
@@ -89,20 +94,41 @@ class DriverController extends Controller
                 ->with('error', 'Kamu bukan driver aktif pesanan ini.');
         }
 
-        // Guard 2: status harus Dijemput atau Mencari Laundry
-        if (!in_array($order->status, ['Dijemput', 'Mencari Laundry'])) {
+        // Guard 2: tidak ada yang bisa diubah lagi setelah Selesai
+        if ($order->status === 'Selesai') {
             return redirect()->route('driver.pesanan.detail', $id)
-                ->with('error', 'Detail hanya bisa diubah saat status pesanan Dijemput atau Mencari Laundry.');
+                ->with('error', 'Pesanan sudah selesai, tidak bisa diubah lagi.');
         }
 
-        // Catatan: tipe_antar_jemput SENGAJA tidak divalidasi/diterima di sini
-        // karena driver tidak boleh mengubah field ini (read-only).
-        $data = $request->validate([
-            'alamat_laundry'          => 'required|string',
-            'phone_laundry'           => 'nullable|string|max:20',
-            'estimasi_jumlah_laundry' => 'nullable|string|max:100',
-            'dokumentasi_pakaian'     => 'nullable|string',
-        ]);
+        $statusOrder = ['Diproses', 'Dijemput', 'Mencari Laundry', 'Dicuci', 'Diantar', 'Selesai'];
+        $statusIndex = array_search($order->status, $statusOrder);
+        $dicuciIndex = array_search('Dicuci', $statusOrder);
+
+        // Field yang selalu boleh diubah driver selama order masih aktif
+        // (tidak terikat status tertentu).
+        $rules = [
+            'dokumentasi_pakaian'       => 'nullable|string',
+            'estimasi_jumlah_laundry'   => 'nullable|string|max:100',
+            'phone_laundry'             => 'nullable|string|max:20',
+            'estimasi_waktu_pengerjaan' => 'nullable|string|max:100',
+        ];
+
+        // jenis_layanan: hanya SEBELUM status Dicuci
+        if ($statusIndex < $dicuciIndex) {
+            $rules['jenis_layanan'] = 'nullable|string|max:100';
+        }
+
+        // fee_laundry: hanya MULAI status Dicuci
+        if ($statusIndex >= $dicuciIndex) {
+            $rules['fee_laundry'] = 'nullable|numeric|min:0';
+        }
+
+        $data = $request->validate($rules);
+
+        // Catatan: alamat_laundry & fee (jasa) SENGAJA tidak pernah masuk rules
+        // di sini — keduanya murni domain admin karena rawan manipulasi biaya.
+        // tipe_antar_jemput juga tetap read-only untuk driver, sama seperti
+        // sebelumnya.
 
         $order->update($data);
 

@@ -36,6 +36,8 @@ class Order extends Model
         'rincian_fee',
         'fee_laundry',
         'estimasi_waktu_pengerjaan',
+        'mitra_laundry_id',
+        'promo_id',
     ];
 
     protected $casts = [
@@ -47,6 +49,11 @@ class Order extends Model
         'updated_at'          => 'datetime',
     ];
 
+    public function promo()
+    {
+        return $this->belongsTo(Promotion::class, 'promo_id');
+    }
+    
     // Relasi ke log driver
     public function driverLogs()
     {
@@ -76,6 +83,11 @@ class Order extends Model
     public function fotoNota()
     {
         return $this->hasOne(OrderPhoto::class)->where('type', 'nota');
+    }
+
+    public function mitraLaundry()
+    {
+        return $this->belongsTo(MitraLaundry::class, 'mitra_laundry_id');
     }
 
     protected static function booted()

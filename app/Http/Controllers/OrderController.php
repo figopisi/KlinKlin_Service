@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\MitraLaundry;
+use App\Models\Promotion;
 
 class OrderController extends Controller
 {
@@ -163,7 +165,14 @@ class OrderController extends Controller
     public function adminDetail($id)
     {
         $order = Order::with('driverLogs.driver')->findOrFail($id);
-        return view('admin.adminDetailOrder', compact('order'));
+
+        $mitrasAktif = MitraLaundry::aktif()->orderBy('nama_laundry')->get();
+
+        $promosAktif = Promotion::where('is_active', true)
+            ->orderBy('nama_promo')
+            ->get();
+
+        return view('admin.adminDetailOrder', compact('order', 'mitrasAktif', 'promosAktif'));
     }
 
     public function update(Request $request, $id)
@@ -176,6 +185,8 @@ class OrderController extends Controller
             'alamat_customer'         => 'required|string',
             'alamat_laundry'          => 'required|string',
             'phone_laundry'           => 'nullable|string|max:20',
+            'mitra_laundry_id'        => 'nullable|exists:mitra_laundries,id',
+            'promo_id'                => 'nullable|exists:promotions,id',
             'status'                  => 'required|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
             'fee'                     => 'required|numeric',
             'fee_laundry'               => 'nullable|numeric|min:0',        // ✅ baru
@@ -190,6 +201,18 @@ class OrderController extends Controller
         ]);
 
         $data['is_sorted'] = (int) $request->input('is_sorted', 0);
+        $data['mitra_laundry_id'] = $data['mitra_laundry_id'] ?? null;
+        $data['promo_id'] = $data['promo_id'] ?? null;
+
+        // Hitung fee final di backend (sumber kebenaran), bukan dari input JS.
+        if ($data['promo_id']) {
+            $promo = \App\Models\Promotion::find($data['promo_id']);
+            if ($promo) {
+                $diskon = $promo->harga_awal - $promo->harga_promo;
+                $data['diskon_terpakai'] = $diskon; // simpan histori diskon
+                $data['fee'] = max(0, $data['fee'] - $diskon);
+            }
+        }
 
         // ✅ FIX BUG: Order bertipe 'Jemput Saja' tidak pernah melalui
         // tahap 'Diproses' / 'Dijemput' / 'Mencari Laundry' — driver untuk

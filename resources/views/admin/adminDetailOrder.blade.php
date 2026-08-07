@@ -447,17 +447,34 @@
                 <div class="section-title">Laundry</div>
 
                 <div class="form-group">
+                    <label>Pilih Mitra Laundry <small>(opsional)</small></label>
+                    <select id="pilihMitraLaundry" onchange="pilihMitra(this)">
+                        <option value="">-- Ketik manual / bukan mitra --</option>
+                        @foreach($mitrasAktif as $mitra)
+                            <option value="{{ $mitra->id }}"
+                                data-alamat="{{ $mitra->alamat }}"
+                                data-phone="{{ $mitra->phone }}"
+                                {{ old('mitra_laundry_id', $order->mitra_laundry_id) == $mitra->id ? 'selected' : '' }}>
+                                {{ $mitra->nama_laundry }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <small>Pilih mitra untuk isi otomatis alamat & phone. Atau biarkan kosong untuk isi manual (laundry non-mitra).</small>
+                </div>
+
+                <input type="hidden" name="mitra_laundry_id" id="mitraLaundryId"
+                    value="{{ old('mitra_laundry_id', $order->mitra_laundry_id) }}">
+
+                <div class="form-group">
                     <label>Alamat Laundry</label>
-                    <textarea name="alamat_laundry">{{ old('alamat_laundry', $order->alamat_laundry) }}</textarea>
+                    <textarea name="alamat_laundry" id="alamatLaundry">{{ old('alamat_laundry', $order->alamat_laundry) }}</textarea>
                 </div>
 
                 <div class="form-group">
                     <label>Phone Laundry</label>
-                    <input type="text"
-                           name="phone_laundry"
-                           value="{{ old('phone_laundry', $order->phone_laundry) }}">
+                    <input type="text" name="phone_laundry" id="phoneLaundry"
+                        value="{{ old('phone_laundry', $order->phone_laundry) }}">
                 </div>
-
             </div>
 
             {{-- RIGHT --}}
@@ -547,11 +564,29 @@
                         placeholder="Pilih tanggal dan jam">
                 </div>
 
+               <div class="form-group">
+                    <label>Promo <small>(opsional)</small></label>
+                    <select id="pilihPromo" onchange="hitungUlangFee()">
+                        <option value="">-- Tidak pakai promo --</option>
+                        @foreach($promosAktif as $promo)
+                            <option value="{{ $promo->id }}"
+                                data-harga-awal="{{ $promo->harga_awal }}"
+                                data-harga-promo="{{ $promo->harga_promo }}"
+                                {{ old('promo_id', $order->promo_id) == $promo->id ? 'selected' : '' }}>
+                                {{ $promo->nama_promo }} (Diskon Rp {{ number_format($promo->harga_awal - $promo->harga_promo) }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <input type="hidden" name="promo_id" id="promoId" value="{{ old('promo_id', $order->promo_id) }}">
+
                 <div class="form-group">
                     <label>Fee</label>
-                    <input type="number"
-                           name="fee"
-                           value="{{ old('fee', $order->fee) }}">
+                    <input type="number" id="feeDasar" name="fee"
+                        value="{{ old('fee', $order->fee) }}"
+                        oninput="hitungUlangFee()">
+                    <small id="infoDiskon" style="color:#16a34a; font-weight:600;"></small>
                 </div>
 
                 <div class="form-group">
@@ -806,6 +841,36 @@
         }
         tutupModal(modalId);
     }
+var feeAsliSebelumPromo = null; // simpan fee asli sebelum promo diterapkan
+
+function hitungUlangFee() {
+    var select = document.getElementById('pilihPromo');
+    var opt = select.options[select.selectedIndex];
+    var promoIdField = document.getElementById('promoId');
+    var feeDasarField = document.getElementById('feeDasar');
+    var infoDiskon = document.getElementById('infoDiskon');
+
+    var feeDasar = parseFloat(feeDasarField.value) || 0;
+
+    if (opt.value === '') {
+        promoIdField.value = '';
+        infoDiskon.textContent = '';
+        return; // fee dasar dipakai apa adanya, tanpa potongan
+    }
+
+    promoIdField.value = opt.value;
+
+    var hargaAwal = parseFloat(opt.getAttribute('data-harga-awal')) || 0;
+    var hargaPromo = parseFloat(opt.getAttribute('data-harga-promo')) || 0;
+    var diskon = hargaAwal - hargaPromo;
+
+    var feeFinal = feeDasar - diskon;
+    if (feeFinal < 0) feeFinal = 0;
+
+    infoDiskon.textContent = 'Diskon Rp ' + diskon.toLocaleString('id-ID') + ' → Fee final: Rp ' + feeFinal.toLocaleString('id-ID');
+}
+
+document.addEventListener('DOMContentLoaded', hitungUlangFee);
 
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', function(e) {

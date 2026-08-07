@@ -26,6 +26,7 @@
         <div style="display:flex; gap:10px;">
             <a href="{{ route('admin.promosi.index') }}" class="back-btn">Manajemen Promo</a>
             <a href="{{ route('admin.drivers.index') }}" class="back-btn">Manajemen Driver</a>
+            <a href="{{ route('admin.mitra.index') }}" class="back-btn">Manajemen Mitra Laundry</a>
             <a href="/admin/orders" class="back-btn">Lihat Semua Pesanan</a>
         </div>
     </div>

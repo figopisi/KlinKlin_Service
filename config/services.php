@@ -41,6 +41,10 @@ return [
         'secret'   => env('WABLAS_SECRET_KEY'),
         'driver_group_id' => env('WABLAS_DRIVER_GROUP_ID'),
         'admin_group_id'  => env('WABLAS_ADMIN_GROUP_ID'),
+        'cs_admins' => [
+            ['nama' => 'Admin 1', 'phone' => '628xxxxxxxxxx'],
+            ['nama' => 'Admin 2', 'phone' => '628xxxxxxxxxx'],
+        ],
     ],
 
 ];

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\CustomerProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,16 +49,13 @@ Route::post('/buat-pesanan/draft', [OrderController::class, 'storeDraft'])
 |--------------------------------------------------------------------------
 */
 
-// halaman login (pakai adminlandingpage.blade.php)
 Route::get('/admin/login', [AuthController::class, 'showLogin'])
     ->name('login');
 
-// proses login + rate limit
 Route::post('/admin/login', [AuthController::class, 'login'])
     ->middleware('throttle:5,1')
     ->name('login.process');
 
-// logout (harus login dulu)
 Route::post('/admin/logout', [AuthController::class, 'logout'])
     ->middleware('auth.admin')
     ->name('logout');
@@ -87,9 +85,15 @@ Route::prefix('admin')->middleware('auth.admin')->group(function () {
 
     Route::put('/orders/{id}', [OrderController::class, 'update'])
         ->name('admin.orders.update');
-     Route::post('/orders/{id}/nullify-driver',[OrderController::class, 'nullifyDriver'])
+
+    Route::post('/orders/{id}/nullify-driver', [OrderController::class, 'nullifyDriver'])
         ->name('admin.orders.nullifyDriver');
 
+    Route::get('/verifikasi-profile', [CustomerProfileController::class, 'index'])
+        ->name('admin.verifikasi-profile');
+
+    Route::post('/verifikasi-profile/{profile}', [CustomerProfileController::class, 'updateStatus'])
+        ->name('admin.verifikasi-profile.update');
 });
 
 // Driver Auth
@@ -100,19 +104,13 @@ Route::post('/driver/logout', [AuthController::class, 'driverLogout'])->name('dr
 // Driver Dashboard (dilindungi middleware)
 Route::middleware(['auth.driver'])->prefix('driver')->name('driver.')->group(function () {
     Route::get('/dashboard', [DriverController::class, 'dashboard'])->name('dashboard');
-});
-
-Route::middleware(['auth.driver'])->prefix('driver')->name('driver.')->group(function () {
-    Route::get('/dashboard', [DriverController::class, 'dashboard'])->name('dashboard');
     Route::post('/ambil/{id}', [DriverController::class, 'ambilPesanan'])->name('ambil');
     Route::post('/update-status/{id}', [DriverController::class, 'updateStatus'])->name('updateStatus');
-    Route::post('/lepas/{id}', [DriverController::class, 'lepasPesanan'])
-    ->name('lepas');
+    Route::post('/lepas/{id}', [DriverController::class, 'lepasPesanan'])->name('lepas');
 
     Route::get('/pesanan/{id}', [DriverController::class, 'detail'])->name('pesanan.detail');
     Route::post('/pesanan/{id}/update', [DriverController::class, 'updateByDriver'])->name('pesanan.update');
 });
-
 
 Route::post('/driver/pesanan/{id}/foto/pengambilan', [DriverController::class, 'uploadBuktiPengambilan'])->name('driver.foto.pengambilan');
 Route::post('/driver/pesanan/{id}/foto/nota', [DriverController::class, 'uploadBuktiNota'])->name('driver.foto.nota');
@@ -124,15 +122,12 @@ Route::post('/admin/pesanan/{id}/foto/nota', [DriverController::class, 'uploadBu
 Route::post('/admin/pesanan/{id}/foto/pengiriman', [DriverController::class, 'uploadBuktiPengiriman'])->name('admin.foto.pengiriman');
 Route::delete('/admin/foto/{photoId}', [DriverController::class, 'deleteFoto'])->name('admin.foto.delete');
 
-
-//Promotion routes
+// Promotion routes
 use App\Http\Controllers\PromotionController;
 
-// Customer - lihat promo yang aktif & masih berlaku
 Route::get('/promosi', [PromotionController::class, 'index'])
     ->name('promosi.index');
 
-// Admin - CRUD penuh
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/promosi', [PromotionController::class, 'adminIndex'])->name('promosi.index');
     Route::get('/promosi/create', [PromotionController::class, 'create'])->name('promosi.create');
@@ -143,7 +138,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 use App\Http\Controllers\DriverManagementController;
- 
+
 Route::prefix('admin/drivers')->name('admin.drivers.')->group(function () {
     Route::get('/', [DriverManagementController::class, 'index'])->name('index');
     Route::post('/', [DriverManagementController::class, 'store'])->name('store');
@@ -153,6 +148,13 @@ Route::prefix('admin/drivers')->name('admin.drivers.')->group(function () {
     Route::post('/{id}/document', [DriverManagementController::class, 'uploadDocument'])->name('document.upload');
     Route::delete('/{id}/document', [DriverManagementController::class, 'deleteDocument'])->name('document.delete');
 });
+
+use App\Http\Controllers\MitraLaundryController;
+
+Route::get('/admin/mitra', [MitraLaundryController::class, 'index'])->name('admin.mitra.index');
+Route::post('/admin/mitra', [MitraLaundryController::class, 'store'])->name('admin.mitra.store');
+Route::put('/admin/mitra/{id}', [MitraLaundryController::class, 'update'])->name('admin.mitra.update');
+Route::post('/admin/mitra/{id}/toggle-status', [MitraLaundryController::class, 'toggleStatus'])->name('admin.mitra.toggleStatus');
 
 use App\Http\Controllers\WablasWebhookController;
 

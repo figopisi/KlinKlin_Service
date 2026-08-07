@@ -16,6 +16,7 @@ class Promotion extends Model
         'tanggal_mulai',
         'tanggal_selesai',
         'is_active',
+        'khusus_mahasiswa',
     ];
 
     protected $casts = [
@@ -23,6 +24,11 @@ class Promotion extends Model
         'tanggal_selesai' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'promo_id');
+    }
 
     // Cek apakah promo masih berlaku (tanggal + kuota + toggle)
     public function isValid(): bool

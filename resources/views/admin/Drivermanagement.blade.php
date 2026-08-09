@@ -340,7 +340,7 @@
                     <td>
                         <div class="pencapaian-cell">
                             <span class="pencapaian-total">{{ $driver->total_selesai }} pesanan selesai</span>
-                            <span class="pencapaian-fee">Rp {{ number_format($driver->total_fee) }}</span>
+                            <span class="pencapaian-fee">Rp {{ number_format($driver->total_penghasilan) }}</span>
                         </div>
                     </td>
                     <td>

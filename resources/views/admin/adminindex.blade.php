@@ -28,6 +28,7 @@
             <a href="{{ route('admin.drivers.index') }}" class="back-btn">Manajemen Driver</a>
             <a href="{{ route('admin.mitra.index') }}" class="back-btn">Manajemen Mitra Laundry</a>
             <a href="/admin/orders" class="back-btn">Lihat Semua Pesanan</a>
+            <a href="{{ route('admin.verifikasi-profile') }}" class="back-btn">Verifikasi Profile</a>
         </div>
     </div>
 
@@ -58,11 +59,35 @@
             </div>
         </div>
 
-        <!-- TOTAL PEMASUKAN -->
+        <!-- TOTAL PEMASUKAN (KOTOR) -->
         <div class="card">
             <div class="card-content">
                 <h3>Rp {{ number_format($totalPemasukan) }}</h3>
-                <p>Total Pemasukan</p>
+                <p>Total Pemasukan (Kotor)</p>
+            </div>
+        </div>
+
+        <!-- PENDAPATAN BERSIH -->
+        <div class="card">
+            <div class="card-content">
+                <h3>Rp {{ number_format($pendapatanBersih ?? 0) }}</h3>
+                <p>Pendapatan Bersih KlinKlin</p>
+            </div>
+        </div>
+
+        <!-- PENDAPATAN DARI DRIVER -->
+        <div class="card">
+            <div class="card-content">
+                <h3>Rp {{ number_format($pendapatanDariDriver ?? 0) }}</h3>
+                <p>Pendapatan dari Driver (20%)</p>
+            </div>
+        </div>
+
+        <!-- PENDAPATAN DARI MITRA -->
+        <div class="card">
+            <div class="card-content">
+                <h3>Rp {{ number_format($pendapatanDariMitra ?? 0) }}</h3>
+                <p>Pendapatan dari Mitra Laundry</p>
             </div>
         </div>
 
@@ -157,7 +182,7 @@
                 </div>
 
                 <div class="detail-item">
-                    <strong>Estimasi Jumlah (kg/pcs)</strong>
+                    <strong>Berat Laundry(kg)</strong>
                     <input type="text" name="estimasi_jumlah_laundry" value="{{ old('estimasi_jumlah_laundry') }}" placeholder="mis. 5 kg">
                 </div>
 
@@ -170,7 +195,7 @@
                 <div class="section-title">Operasional</div>
 
                 <div class="detail-item">
-                    <strong>Fee (Rp)</strong>
+                    <strong>Fee (jasa Ongkir)</strong>
                     <input type="number" name="fee" value="{{ old('fee') }}" required>
                 </div>
 

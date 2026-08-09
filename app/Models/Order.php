@@ -28,7 +28,7 @@ class Order extends Model
         'dokumentasi_pakaian',
         'tanggal_penjemputan',
         'jenis_layanan',
-        'estimasi_jumlah_laundry',
+        'estimasi_jumlah_laundry', //kg
         'current_driver_id',
         'zona',
         'tipe_antar_jemput',
@@ -38,6 +38,12 @@ class Order extends Model
         'estimasi_waktu_pengerjaan',
         'mitra_laundry_id',
         'promo_id',
+        'ongkos_pilah',
+        'penghasilan_driver',
+        'penghasilan_laundry_mitra',
+        'penghasilan_klinklin_dari_driver',
+        'penghasilan_klinklin_dari_mitra',
+        'penghasilan_bersih_klinklin',
     ];
 
     protected $casts = [
@@ -47,52 +53,35 @@ class Order extends Model
         'tanggal_penjemputan' => 'datetime',
         'created_at'          => 'datetime',
         'updated_at'          => 'datetime',
+        'ongkos_pilah'                     => 'integer',
+        'penghasilan_driver'               => 'integer',
+        'penghasilan_laundry_mitra'        => 'integer',
+        'penghasilan_klinklin_dari_driver' => 'integer',
+        'penghasilan_klinklin_dari_mitra'  => 'integer',
+        'penghasilan_bersih_klinklin'      => 'integer',
     ];
 
-    public function promo()
-    {
-        return $this->belongsTo(Promotion::class, 'promo_id');
-    }
-    
-    // Relasi ke log driver
-    public function driverLogs()
-    {
-        return $this->hasMany(OrderDriverLog::class);
-    }
-
-    public function currentDriver()
-    {
-        return $this->belongsTo(Driver::class, 'current_driver_id');
-    }
-
-    public function photos()
-    {
-        return $this->hasMany(OrderPhoto::class);
-    }
-
-    public function fotoPengambilan()
-    {
-        return $this->hasOne(OrderPhoto::class)->where('type', 'pengambilan');
-    }
-
-    public function fotoPengiriman()
-    {
-        return $this->hasOne(OrderPhoto::class)->where('type', 'pengiriman');
-    }
-
-    public function fotoNota()
-    {
-        return $this->hasOne(OrderPhoto::class)->where('type', 'nota');
-    }
-
-    public function mitraLaundry()
-    {
-        return $this->belongsTo(MitraLaundry::class, 'mitra_laundry_id');
-    }
-
+    // ==========================================================
+    // Semua event lifecycle digabung di SATU method booted()
+    // ==========================================================
     protected static function booted()
     {
-        // Order baru dari bot selalu 'Unconfirmed' -> notif ke grup ADMIN dulu, bukan driver
+        // --- Hitung snapshot penghasilan sebelum disimpan ---
+        static::saving(function (Order $order) {
+            // ✅ Hitung ongkos_pilah otomatis dari estimasi_jumlah_laundry, hanya jika is_sorted true
+            if ($order->is_sorted) {
+                $beratKg = $order->extractBeratKg($order->estimasi_jumlah_laundry);
+                $order->ongkos_pilah = $beratKg ? floor($beratKg) * 1000 : 0;
+            } else {
+                $order->ongkos_pilah = 0;
+            }
+
+            if ($order->status === 'Selesai') {
+                $order->hitungPenghasilan();
+            }
+        });
+
+        // --- Order baru dari bot selalu 'Unconfirmed' -> notif ke grup ADMIN dulu ---
         static::created(function (Order $order) {
             if ($order->status === 'Unconfirmed') {
                 $groupId = config('services.wablas.admin_group_id');
@@ -115,7 +104,6 @@ class Order extends Model
 
         static::updated(function (Order $order) {
             // Notifikasi ke grup DRIVER, hanya setelah admin konfirmasi
-            // (transisi dari 'Unconfirmed' ke status aktif apapun, dan belum ada driver)
             if (
                 $order->isDirty('status')
                 && $order->getOriginal('status') === 'Unconfirmed'
@@ -191,7 +179,7 @@ class Order extends Model
                     }
 
                     $message = "Halo {$order->nama} 👋\n\n"
-                        . "Pesanan laundry Anda dengan kode *{$order->token}* sudah selesai kami proses ✅\n\n"
+                        . "Pesanan laundry Anda dengan kode *{$order->token}* sudah selesai di cuci oleh laundry dan siap driver antar ke rumahmu, di tunggu ya! ✅\n\n"
                         . "Tipe Layanan : {$order->tipe_antar_jemput}\n"
                         . "Alamat Laundry : {$alamatLaundryText}\n\n"
                         . $driverInfo
@@ -206,4 +194,85 @@ class Order extends Model
         });
     }
 
+    public function hitungPenghasilan(): void
+    {
+        $fee         = $this->fee ?? 0;
+        $ongkosPilah = $this->ongkos_pilah ?? 0;
+        $feeLaundry  = $this->fee_laundry ?? 0;
+        $adaMitra    = !is_null($this->mitra_laundry_id);
+
+        $this->penghasilan_driver = ($fee + $ongkosPilah) * 0.8;
+        $this->penghasilan_klinklin_dari_driver = ($fee + $ongkosPilah) * 0.2;
+
+        if ($adaMitra) {
+            $persentaseKlinklin = $this->mitraLaundry?->persentase_bisnis ?? 10;
+            $persentaseMitra = 100 - $persentaseKlinklin;
+
+            $this->penghasilan_laundry_mitra = $feeLaundry * ($persentaseMitra / 100);
+            $this->penghasilan_klinklin_dari_mitra = $feeLaundry * ($persentaseKlinklin / 100);
+        } else {
+            $this->penghasilan_laundry_mitra = 0;
+            $this->penghasilan_klinklin_dari_mitra = 0;
+        }
+
+        $this->penghasilan_bersih_klinklin =
+            $this->penghasilan_klinklin_dari_driver + $this->penghasilan_klinklin_dari_mitra;
+    }
+
+    public function extractBeratKg(?string $text): ?float
+    {
+        if (empty($text)) {
+            return null;
+        }
+
+        if (preg_match('/(\d+(\.\d+)?)/', $text, $matches)) {
+            return (float) $matches[1];
+        }
+
+        return null;
+    }
+
+    // ==========================================================
+    // Relasi
+    // ==========================================================
+
+    public function promo()
+    {
+        return $this->belongsTo(Promotion::class, 'promo_id');
+    }
+
+    public function driverLogs()
+    {
+        return $this->hasMany(OrderDriverLog::class);
+    }
+
+    public function currentDriver()
+    {
+        return $this->belongsTo(Driver::class, 'current_driver_id');
+    }
+
+    public function photos()
+    {
+        return $this->hasMany(OrderPhoto::class);
+    }
+
+    public function fotoPengambilan()
+    {
+        return $this->hasOne(OrderPhoto::class)->where('type', 'pengambilan');
+    }
+
+    public function fotoPengiriman()
+    {
+        return $this->hasOne(OrderPhoto::class)->where('type', 'pengiriman');
+    }
+
+    public function fotoNota()
+    {
+        return $this->hasOne(OrderPhoto::class)->where('type', 'nota');
+    }
+
+    public function mitraLaundry()
+    {
+        return $this->belongsTo(MitraLaundry::class, 'mitra_laundry_id');
+    }
 }

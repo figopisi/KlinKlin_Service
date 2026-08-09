@@ -15,7 +15,17 @@ class OrderController extends Controller
         $totalPesanan = Order::count();
         $totalPemasukan = Order::sum('fee');
 
-        return view('admin.adminindex', compact('totalPesanan', 'totalPemasukan'));
+        $pendapatanBersih = Order::where('status', 'Selesai')->sum('penghasilan_bersih_klinklin');
+        $pendapatanDariDriver = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_driver'); // ✅ baru
+        $pendapatanDariMitra = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_mitra');   // ✅ baru
+
+        return view('admin.adminindex', compact(
+            'totalPesanan',
+            'totalPemasukan',
+            'pendapatanBersih',
+            'pendapatanDariDriver',
+            'pendapatanDariMitra'
+        ));
     }
 
     public function index()
@@ -189,6 +199,7 @@ class OrderController extends Controller
             'promo_id'                => 'nullable|exists:promotions,id',
             'status'                  => 'required|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
             'fee'                     => 'required|numeric',
+            'ongkos_pilah'            => 'nullable|numeric|min:0', 
             'fee_laundry'               => 'nullable|numeric|min:0',        // ✅ baru
             'estimasi_waktu_pengerjaan' => 'nullable|string|max:100',       // ✅ baru
             'note'                    => 'nullable|string',
@@ -200,6 +211,7 @@ class OrderController extends Controller
             'tipe_antar_jemput'       => 'required|in:Antar Saja,Jemput Saja,Antar Jemput (PP)',
         ]);
 
+        $data['ongkos_pilah'] = $data['ongkos_pilah'] ?? 0;
         $data['is_sorted'] = (int) $request->input('is_sorted', 0);
         $data['mitra_laundry_id'] = $data['mitra_laundry_id'] ?? null;
         $data['promo_id'] = $data['promo_id'] ?? null;
@@ -274,7 +286,7 @@ class OrderController extends Controller
 
     public function exportCsv(Request $request)
     {
-        $query = Order::query();
+        $query = Order::with(['mitraLaundry', 'currentDriver']); // ✅ eager load
 
         if ($request->filled('search')) {
             $query->where('token', 'like', '%' . $request->search . '%');
@@ -303,10 +315,18 @@ class OrderController extends Controller
         $callback = function () use ($orders) {
             $file = fopen('php://output', 'w');
 
-            // BOM biar Excel baca UTF-8 dengan benar (karakter ñ, é, dll aman)
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            fputcsv($file, ['ID', 'Token', 'Nama', 'Phone', 'Alamat Customer', 'Alamat Laundry', 'Tipe Antar Jemput', 'Status', 'Fee', 'Tanggal Dibuat']);
+            fputcsv($file, [
+                'ID', 'Token', 'Nama', 'Phone',
+                'Alamat Customer', 'Alamat Laundry',
+                'Tipe Antar Jemput', 'Status',
+                'Fee', 'Ongkos Pilah', 'Fee Laundry',
+                'Mitra Laundry', 'Driver',
+                'Penghasilan Driver', 'Penghasilan Laundry Mitra',
+                'KlinKlin dari Driver', 'KlinKlin dari Mitra', 'Pendapatan Bersih KlinKlin',
+                'Tanggal Dibuat',
+            ]);
 
             foreach ($orders as $order) {
                 fputcsv($file, [
@@ -319,6 +339,15 @@ class OrderController extends Controller
                     $order->tipe_antar_jemput,
                     $order->status,
                     $order->fee,
+                    $order->ongkos_pilah,
+                    $order->fee_laundry,
+                    $order->mitraLaundry->nama_laundry ?? '-',
+                    $order->currentDriver->name ?? '-',
+                    $order->penghasilan_driver,
+                    $order->penghasilan_laundry_mitra,
+                    $order->penghasilan_klinklin_dari_driver,
+                    $order->penghasilan_klinklin_dari_mitra,
+                    $order->penghasilan_bersih_klinklin,
                     $order->created_at->format('Y-m-d H:i'),
                 ]);
             }

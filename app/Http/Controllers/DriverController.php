@@ -118,12 +118,20 @@ class DriverController extends Controller
             $rules['jenis_layanan'] = 'nullable|string|max:100';
         }
 
-        // fee_laundry: hanya MULAI status Dicuci
+        // fee_laundry & ongkos_pilah: hanya MULAI status Dicuci
         if ($statusIndex >= $dicuciIndex) {
-            $rules['fee_laundry'] = 'nullable|numeric|min:0';
+            $rules['fee_laundry']   = 'nullable|numeric|min:0';
+            $rules['ongkos_pilah']  = 'nullable|numeric|min:0'; // ✅ tambahan
         }
 
         $data = $request->validate($rules);
+
+        // ✅ Ongkos pilah hanya berlaku kalau customer memang minta dipilah.
+        // Kalau is_sorted false, paksa 0 supaya tidak ada celah driver
+        // mengisi ongkos pilah untuk order yang sebenarnya tidak dipilah.
+        if (isset($data['ongkos_pilah']) && !$order->is_sorted) {
+            $data['ongkos_pilah'] = 0;
+        }
 
         // Catatan: alamat_laundry & fee (jasa) SENGAJA tidak pernah masuk rules
         // di sini — keduanya murni domain admin karena rawan manipulasi biaya.

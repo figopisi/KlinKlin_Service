@@ -603,13 +603,13 @@
                 </div>
                 <div class="d-field">
                     @if($bisaEditUmum)
-                        <label>Estimasi Jumlah Laundry <span class="editable-badge">bisa diubah</span></label>
+                        <label>Berat Laundry(kg) <span class="editable-badge">bisa diubah</span></label>
                         <input type="text" name="estimasi_jumlah_laundry"
                                value="{{ $order->estimasi_jumlah_laundry }}"
                                class="editable" placeholder="Contoh: 5 kg">
                         @error('estimasi_jumlah_laundry') <div class="d-err">{{ $message }}</div> @enderror
                     @else
-                        <label>Estimasi Jumlah Laundry</label>
+                        <label>Berat Laundry(kg)</label>
                         <input type="text" value="{{ $order->estimasi_jumlah_laundry ?? '-' }}" readonly>
                     @endif
                 </div>
@@ -629,6 +629,7 @@
                     <label>Pemilahan Pakaian</label>
                     <input type="text" value="{{ $order->is_sorted ? 'Ya' : 'Tidak' }}" readonly>
                 </div>
+
                 <div class="d-field">
                     <label>Catatan</label>
                     <textarea readonly>{{ $order->note ?? '-' }}</textarea>
@@ -654,6 +655,18 @@
                         <a href="{{ $order->dokumentasi_pakaian }}" target="_blank" class="d-inline-link">🔗 Lihat Dokumentasi</a>
                     @endif
                 </div>
+
+                <div class="d-field">
+                    <label>Fee Jasa (Ongkir) <span class="locked-badge">🔒 hanya admin</span></label>
+                    <input type="text" value="Rp {{ number_format($order->fee, 0, ',', '.') }}" readonly>
+                </div>
+
+                @if($order->is_sorted)
+                <div class="d-field">
+                    <label>Ongkos Pilah <small style="color:#888;">(otomatis: Rp 1.000/kg dari berat kg laundry)</small></label>
+                    <input type="text" value="{{ $order->ongkos_pilah ? 'Rp ' . number_format($order->ongkos_pilah, 0, ',', '.') : '-' }}" readonly>
+                </div>
+                @endif
                 <div class="d-field">
                     @if($bisaEditFeeLaundry)
                         <label>Fee Laundry <span class="editable-badge">bisa diubah</span></label>

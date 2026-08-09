@@ -387,6 +387,13 @@
         </div>
     @endif
 
+    @if(is_null($order->current_driver_id) && $order->status !== 'Selesai')
+    <div class="d-banner warn">
+        ⚠️ Pesanan ini belum punya driver. Jangan ubah status ke "Selesai" sebelum driver ditugaskan.
+    </div>
+    @endif
+    <br>
+
     {{--
         ✅ FIX: Form "Lepaskan Driver" diletakkan di LUAR form utama.
         Sebelumnya form ini bersarang (nested) di dalam form update,
@@ -526,7 +533,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Estimasi Jumlah Laundry</label>
+                    <label>Berat Laundry(kg)</label>
                     <input type="text"
                            name="estimasi_jumlah_laundry"
                            value="{{ old('estimasi_jumlah_laundry', $order->estimasi_jumlah_laundry) }}">
@@ -582,7 +589,7 @@
                 <input type="hidden" name="promo_id" id="promoId" value="{{ old('promo_id', $order->promo_id) }}">
 
                 <div class="form-group">
-                    <label>Fee</label>
+                    <label>Fee Jasa Ongkir</label>
                     <input type="number" id="feeDasar" name="fee"
                         value="{{ old('fee', $order->fee) }}"
                         oninput="hitungUlangFee()">

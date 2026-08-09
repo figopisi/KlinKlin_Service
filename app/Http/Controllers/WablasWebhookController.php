@@ -39,6 +39,17 @@ class WablasWebhookController extends Controller
             }
         }
 
+        // Lapisan dedup kedua: Wablas kadang mengirim webhook duplikat untuk
+        // satu pesan WA yang sama dengan msgId yang BERBEDA (retry di sisi
+        // provider). Dedup berbasis isi pesan + nomor dengan window singkat
+        // menangkap kasus ini tanpa memblokir pesan sengaja berulang setelah jeda wajar.
+        $contentKey = 'wablas_content_' . md5($phone . '|' . $text);
+        $isNewContent = Cache::add($contentKey, true, now()->addSeconds(8));
+        if (!$isNewContent) {
+            \Log::info("Duplicate webhook (content-based) diabaikan, phone={$phone}, message={$text}");
+            return response('', 200);
+        }
+
         $lock = Cache::lock("wablas_phone_lock_{$phone}", 15);
 
         try {
@@ -73,7 +84,7 @@ class WablasWebhookController extends Controller
 
                 app(WablasService::class)->sendText(
                     $phone,
-                    "Halo, selamat datang di KlinKlin Laundry! 👋\n\n"
+                    "Halo, selamat datang di KlinKlin! 👋\n\n"
                     . "Sebelum mulai, kami perlu data diri Anda untuk membuat profil.\n"
                     . "*Ini hanya perlu diisi sekali saja* — setelah profil dibuat, Anda tidak perlu mengisi ulang untuk pesanan berikutnya 🙏\n\n"
                     . "Boleh tahu nama Anda?"
@@ -83,6 +94,20 @@ class WablasWebhookController extends Controller
         }
 
         if (!$session->bot_active) {
+            return;
+        }
+
+        // Keyword "batal" berlaku di step manapun selama proses pemesanan
+        // (belum menghasilkan order tersimpan di database).
+        $stepPemesanan = [
+            'pilih_layanan', 'tanya_pakai_profil', 'tanya_nama', 'tanya_alamat_customer',
+            'tanya_alamat_laundry', 'tanya_promo', 'tanya_catatan', 'konfirmasi',
+        ];
+
+        if (in_array($session->step, $stepPemesanan) && in_array(strtolower(trim($text)), ['batal', 'cancel', 'batalkan'])) {
+            $session->update(['step' => 'menu', 'jenis_layanan' => null, 'data' => null]);
+            app(WablasService::class)->sendText($phone, "Pesanan dibatalkan ❌");
+            $this->sendMenuUtama($phone);
             return;
         }
 
@@ -154,18 +179,14 @@ class WablasWebhookController extends Controller
 
             $session->update(['bot_active' => false, 'data' => null]);
 
-            $daftarAdmin = collect(config('services.wablas.cs_admins'))
-                ->map(fn($a) => "• {$a['nama']}: wa.me/{$a['phone']}")
-                ->implode("\n");
-
             return "Terima kasih! Profil Anda sudah tersimpan ✅ (data ini tidak perlu diisi ulang lagi ke depannya)\n\n"
-                . "Untuk verifikasi status mahasiswa, mohon kirim foto KTM Anda ke salah satu admin kami berikut:\n\n"
-                . $daftarAdmin
-                . "\n\nSetelah diverifikasi, Anda akan otomatis bisa lanjut menggunakan layanan kami 🙏";
+                . "Untuk verifikasi status mahasiswa, mohon *kirim foto KTM Anda langsung di sini* 📸\n\n"
+                . "Admin kami akan segera memproses verifikasi Anda melalui chat ini juga — tidak perlu menghubungi nomor lain.\n\n"
+                . "Setelah diverifikasi, Anda akan otomatis bisa lanjut menggunakan layanan kami 🙏";
         }
 
         CustomerProfile::updateOrCreate(
-            ['phone' => $data['reg_nama'] ? $session->phone : $session->phone],
+            ['phone' => $session->phone],
             ['nama' => $data['reg_nama'], 'alamat_customer' => $data['reg_alamat'], 'status' => 'biasa']
         );
 
@@ -239,7 +260,7 @@ class WablasWebhookController extends Controller
                 $daftarAdmin = collect(config('services.wablas.cs_admins'))
                     ->map(fn($a) => "• {$a['nama']}: wa.me/{$a['phone']}")
                     ->implode("\n");
-                return "Silakan hubungi CS kami:\n\n{$daftarAdmin}";
+                return "Untuk pembatalan pesanan, perubahan detail pesanan, atau kendala lainnya, silakan hubungi CS kami:\n\n{$daftarAdmin}";
             }
         }
 
@@ -251,7 +272,8 @@ class WablasWebhookController extends Controller
     protected function sendMenuUtama(string $phone): void
     {
         app(WablasService::class)->sendText($phone,
-            "Silakan pilih menu:\n\n"
+            "Selamat datang di KlinKlin👋\n\n"
+            . "Silakan pilih menu:\n\n"
             . "1. Buat Pesanan\n"
             . "2. Cek Status Pesanan\n"
             . "3. Ubah Profil\n"
@@ -279,9 +301,10 @@ class WablasWebhookController extends Controller
             . "3. Jemput Saja\n\n"
             . "Balas dengan angka (1/2/3)\n\n"
             . "📌 Penjelasan:\n"
-            . "1. *Antar Jemput* — Kami jemput pakaian Anda, cucikan, lalu antar kembali.\n"
-            . "2. *Antar Saja* — Anda antar sendiri, kami antar balik setelah selesai.\n"
-            . "3. *Jemput Saja* — Kami jemput & antarkan ke laundry pilihan Anda, Anda ambil sendiri."
+            . "1. *Antar Jemput* — Kami jemput pakaian Anda, antarkan ke laundry pilihan anda atau mitra kami, lalu antar kembali.\n"
+            . "2. *Antar Saja* — Kami antarkan pakaian anda ke laundry pilihan Anda/mitra kami, Anda ambil sendiri.\n"
+            . "3. *Jemput Saja* — Kami jemput Pakaian dari laundry pilihan anda, ke rumah anda\n\n"
+            . "_Ketik *batal* kapan saja untuk membatalkan proses pemesanan ini._"
         );
     }
 
@@ -322,7 +345,7 @@ class WablasWebhookController extends Controller
         $jawaban = $this->matchYaTidak($text);
 
         if ($jawaban === null) {
-            return "Mohon balas *ya* atau *tidak* ya 🙏";
+            return "Mohon balas *'ya'* atau *'tidak'* ya 🙏";
         }
 
         if ($jawaban === 'ya') {
@@ -347,7 +370,7 @@ class WablasWebhookController extends Controller
         $this->saveData($session, 'nama', $text);
         $session->update(['step' => 'tanya_alamat_customer']);
 
-        return "Baik, {$text} 👋\n\nAlamat penjemputan/pengantaran di mana?";
+        return "Baik, {$text} 👋\n\nAlamat Rumah Anda di mana?";
     }
 
     protected function handleTanyaAlamatCustomer(ChatSession $session, string $text): string
@@ -369,7 +392,7 @@ class WablasWebhookController extends Controller
         }
 
         return "Ada laundry spesifik yang ingin dipilih?\n\n"
-             . "Kosongkan (balas *tidak*) jika tidak ada, kami akan rekomendasikan/pilihkan mitra laundry kami yang cocok untuk Anda dan pastinya terpercaya.";
+             . "Balas *'tidak'* jika tidak ada, kami akan rekomendasikan dan pilihkan mitra laundry kami yang cocok untuk Anda dan pastinya terpercaya.";
     }
 
     protected function handleTanyaAlamatLaundry(ChatSession $session, string $text): ?string
@@ -473,6 +496,7 @@ class WablasWebhookController extends Controller
         return "Terakhir, mohon berikan catatan untuk driver dan laundry ya 🙏\n\n"
              . "Boleh mencakup:\n"
              . "• Waktu penjemputan yang diinginkan\n"
+             . "• Apakah cucian perlu kami pilah\n"
              . "• Jenis jasa laundry (cuci saja, setrika saja, cuci+setrika, dry clean, dll)\n"
              . "• Instruksi khusus lainnya\n\n"
              . "Jika tidak ada catatan tambahan, balas *tidak*.";

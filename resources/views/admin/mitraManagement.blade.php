@@ -352,6 +352,8 @@
                     <th>Alamat</th>
                     <th>Status</th>
                     <th>Pembagian Fee</th>
+                    <th>Total Order Selesai</th>
+                    <th>Total Pendapatan</th>
                     <th>Catatan</th>
                     <th>Aksi</th>
                 </tr>
@@ -375,6 +377,8 @@
                             <span class="persen-laundry">Laundry {{ rtrim(rtrim(number_format(100 - $mitra->persentase_bisnis, 2), '0'), '.') }}%</span>
                         </div>
                     </td>
+                    <td>{{ $mitra->total_order ?? 0 }}</td>
+                    <td>Rp {{ number_format($mitra->total_pendapatan ?? 0, 0, ',', '.') }}</td>
                     <td class="catatan-cell">{{ $mitra->catatan ?? '-' }}</td>
                     <td>
                         <div class="action-cell">
@@ -393,7 +397,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="empty-row">Belum ada mitra laundry terdaftar.</td>
+                    <td colspan="9" class="empty-row">Belum ada mitra laundry terdaftar.</td>
                 </tr>
                 @endforelse
             </tbody>

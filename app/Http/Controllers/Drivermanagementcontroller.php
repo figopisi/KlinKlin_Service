@@ -38,7 +38,7 @@ class DriverManagementController extends Controller
             ->select(
                 'order_driver_logs.driver_id',
                 DB::raw('COUNT(*) as total_selesai'),
-                DB::raw('SUM(orders.fee) as total_fee')
+                DB::raw('SUM(orders.penghasilan_driver) as total_penghasilan') // ✅ ganti dari orders.fee
             )
             ->groupBy('order_driver_logs.driver_id')
             ->get()
@@ -47,7 +47,7 @@ class DriverManagementController extends Controller
         $drivers->each(function ($driver) use ($pencapaian) {
             $data = $pencapaian->get($driver->id);
             $driver->total_selesai = $data->total_selesai ?? 0;
-            $driver->total_fee = $data->total_fee ?? 0;
+            $driver->total_penghasilan = $data->total_penghasilan ?? 0; // ✅ rename biar jelas
         });
 
         return view('admin.driverManagement', compact('drivers'));
@@ -111,12 +111,12 @@ class DriverManagementController extends Controller
             ->where('order_driver_logs.driver_id', $driver->id)
             ->select(
                 DB::raw('COUNT(*) as total_selesai'),
-                DB::raw('SUM(orders.fee) as total_fee')
+                DB::raw('SUM(orders.penghasilan_driver) as total_penghasilan')
             )
             ->first();
 
         $driver->total_selesai = $pencapaian->total_selesai ?? 0;
-        $driver->total_fee = $pencapaian->total_fee ?? 0;
+        $driver->total_penghasilan = $pencapaian->total_penghasilan ?? 0;
 
         return view('admin.driverDetail', compact('driver'));
     }

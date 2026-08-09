@@ -263,8 +263,8 @@
                     <div class="label">Pesanan Selesai</div>
                 </div>
                 <div class="pencapaian-item">
-                    <div class="angka">Rp {{ number_format($driver->total_fee) }}</div>
-                    <div class="label">Total Fee</div>
+                    <div class="angka">Rp {{ number_format($driver->total_penghasilan) }}</div>
+                    <div class="label">Total Penghasilan</div>
                 </div>
             </div>
         </div>

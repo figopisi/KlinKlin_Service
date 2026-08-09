@@ -155,6 +155,7 @@ Route::get('/admin/mitra', [MitraLaundryController::class, 'index'])->name('admi
 Route::post('/admin/mitra', [MitraLaundryController::class, 'store'])->name('admin.mitra.store');
 Route::put('/admin/mitra/{id}', [MitraLaundryController::class, 'update'])->name('admin.mitra.update');
 Route::post('/admin/mitra/{id}/toggle-status', [MitraLaundryController::class, 'toggleStatus'])->name('admin.mitra.toggleStatus');
+Route::get('/admin/mitra/{id}', [MitraLaundryController::class, 'show'])->name('admin.mitra.show');
 
 use App\Http\Controllers\WablasWebhookController;
 

@@ -18,6 +18,7 @@ class Order extends Model
         'alamat_customer',
         'alamat_laundry',
         'fee',
+        'fee_sebelum_diskon',   // ✅ baru
         'is_sorted',
         'nama',
         'note',
@@ -49,6 +50,7 @@ class Order extends Model
     protected $casts = [
         'is_sorted'           => 'boolean',
         'fee'                 => 'integer',
+        'fee_sebelum_diskon'  => 'integer',   // ✅ baru
         'jarak_km'            => 'decimal:2',
         'tanggal_penjemputan' => 'datetime',
         'created_at'          => 'datetime',

@@ -132,7 +132,7 @@
                 </div>
                 <span class="stat-divider" aria-hidden="true"></span>
                 <div class="stat">
-                    <div class="stat-num">3<span>+</span></div>
+                    <div class="stat-num">50<span>+</span></div>
                     <div class="stat-label" data-i18n-html="about_stat2"><strong>Pesan</strong> Lagi</div>
                 </div>
             </div>

@@ -559,12 +559,24 @@
 
                     <input type="hidden" name="promo_id" id="promoId" value="{{ old('promo_id', $order->promo_id) }}">
 
+                    {{-- ✅ Fee dasar sebelum diskon promo — ini yang jadi sumber input admin,
+                        bukan fee final. Fee final dihitung ulang otomatis oleh backend
+                        setiap kali disimpan, supaya diskon tidak terpotong berkali-kali. --}}
                     <div class="kk-field">
-                        <label>Fee Jasa Ongkir</label>
-                        <input type="number" id="feeDasar" name="fee"
-                            value="{{ old('fee', $order->fee) }}"
+                        <label>Fee Jasa Ongkir <small>(sebelum diskon promo)</small></label>
+                        <input type="number" id="feeDasar" name="fee_sebelum_diskon"
+                            value="{{ old('fee_sebelum_diskon', $order->fee_sebelum_diskon ?? $order->fee) }}"
                             oninput="hitungUlangFee()">
                         <small id="infoDiskon" style="color:#17A673; font-weight:700;"></small>
+                    </div>
+
+                    {{-- ✅ Tampilan fee final read-only, biar admin tetap lihat hasil akhirnya
+                        tanpa bisa mengedit langsung (mencegah admin override manual yang
+                        bisa bikin data tidak sinkron dengan fee_sebelum_diskon + promo). --}}
+                    <div class="kk-field">
+                        <label>Fee Final <small>(setelah diskon, otomatis)</small></label>
+                        <input type="text" value="Rp {{ number_format($order->fee) }}" class="kk-field-readonly" readonly>
+                        <small>Dihitung ulang otomatis saat disimpan, berdasarkan Fee Jasa Ongkir & Promo di atas.</small>
                     </div>
 
                     <div class="kk-field">

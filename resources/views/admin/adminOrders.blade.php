@@ -167,6 +167,89 @@
             #kk-admin .kk-sidebar { width: 100%; height: auto; position: relative; flex-direction: row; flex-wrap: wrap; }
             #kk-admin .kk-sidebar-foot { margin-top: 12px; padding-top: 12px; }
         }
+
+        #kk-admin .kk-repeat-card {
+            background: var(--kk-surface); border: 1px solid var(--kk-line); border-radius: var(--kk-radius);
+            margin-bottom: 20px; overflow: hidden;
+        }
+        #kk-admin .kk-repeat-toggle {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; background: none; border: none; cursor: pointer;
+            font-family: inherit; text-align: left;
+        }
+        #kk-admin .kk-repeat-toggle:hover { background: #FAFBFF; }
+        #kk-admin .kk-repeat-info { display: flex; align-items: center; gap: 12px; }
+        #kk-admin .kk-repeat-icon { font-size: 20px; }
+        #kk-admin .kk-repeat-count { font-size: 14.5px; font-weight: 800; color: var(--kk-ink); }
+        #kk-admin .kk-repeat-sub { font-size: 12.5px; color: var(--kk-ink-soft); margin-top: 2px; }
+        #kk-admin .kk-repeat-chevron { font-size: 14px; color: var(--kk-ink-soft); transition: transform .15s ease; }
+        #kk-admin .kk-repeat-detail { border-top: 1px solid var(--kk-line); }
+        #kk-admin .kk-repeat-detail table { font-size: 13px; }
+
+        #kk-admin .kk-pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        /* Laravel default pagination pakai <nav> > <ul class="pagination"> jika tidak pakai Tailwind */
+        #kk-admin .kk-pagination nav {
+            display: flex;
+            justify-content: center;
+        }
+
+        #kk-admin .kk-pagination ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 4px;
+            align-items: center;
+        }
+
+        #kk-admin .kk-pagination li {
+            display: flex;
+        }
+
+        #kk-admin .kk-pagination li > a,
+        #kk-admin .kk-pagination li > span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--kk-ink);
+            border: 1px solid var(--kk-line);
+            background: var(--kk-surface);
+            transition: all .15s ease;
+        }
+
+        #kk-admin .kk-pagination li > a:hover {
+            border-color: var(--kk-brand);
+            color: var(--kk-brand-ink);
+            background: var(--kk-brand-soft);
+        }
+
+        /* Halaman aktif */
+        #kk-admin .kk-pagination li.active > span,
+        #kk-admin .kk-pagination li > span[aria-current="page"] {
+            background: var(--kk-brand);
+            border-color: var(--kk-brand);
+            color: #fff;
+        }
+
+        /* Disabled (Previous/Next saat di ujung) */
+        #kk-admin .kk-pagination li.disabled > span {
+            color: var(--kk-ink-soft);
+            background: var(--kk-bg);
+            cursor: not-allowed;
+            border-color: var(--kk-line);
+        }
     </style>
 </head>
 
@@ -234,6 +317,14 @@
                     value="{{ request('search') }}"
                 >
 
+                <select name="per_page">
+                    <option value="10" {{ $perPage == '10' ? 'selected' : '' }}>10</option>
+                    <option value="20" {{ $perPage == '20' ? 'selected' : '' }}>20</option>
+                    <option value="50" {{ $perPage == '50' ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ $perPage == '100' ? 'selected' : '' }}>100</option>
+                    <option value="all" {{ $perPage == 'all' ? 'selected' : '' }}>Semua</option>
+                </select>
+
                 <select name="sort">
                     <option value="created_at" {{ request('sort') == 'created_at' ? 'selected' : '' }}>Waktu</option>
                     <option value="fee" {{ request('sort') == 'fee' ? 'selected' : '' }}>Fee</option>
@@ -257,6 +348,58 @@
                 <button type="submit" class="kk-btn kk-btn-primary">Terapkan</button>
             </form>
         </div>
+
+        @php
+            $totalRepeatCustomers = $repeatCustomers->count();
+            $totalRepeatOrders = $repeatCustomers->sum('total_order');
+        @endphp
+
+        <div class="kk-repeat-card">
+            <button type="button" class="kk-repeat-toggle" onclick="kkToggleRepeat()">
+                <div class="kk-repeat-info">
+                    <span class="kk-repeat-icon">🔁</span>
+                    <div>
+                        <div class="kk-repeat-count">{{ $totalRepeatCustomers }} Pelanggan Repeat Order</div>
+                        <div class="kk-repeat-sub">Total {{ $totalRepeatOrders }} pesanan dari pelanggan yang order lebih dari 1x</div>
+                    </div>
+                </div>
+                <span class="kk-repeat-chevron" id="kkRepeatChevron">▾</span>
+            </button>
+
+            @if($totalRepeatCustomers > 0)
+            <div class="kk-repeat-detail" id="kkRepeatDetail" style="display: none;">
+                <div class="kk-table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Jumlah Order</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($repeatCustomers as $rc)
+                            <tr>
+                                <td>{{ $rc->nama }}</td>
+                                <td class="kk-mono">{{ $rc->total_order }}x</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+        </div>
+
+        <script>
+            function kkToggleRepeat() {
+                const detail = document.getElementById('kkRepeatDetail');
+                const chevron = document.getElementById('kkRepeatChevron');
+                if (!detail) return;
+                const isHidden = detail.style.display === 'none';
+                detail.style.display = isHidden ? 'block' : 'none';
+                chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        </script>
 
         <!-- TABLE -->
         <div class="kk-table-wrap">
@@ -332,7 +475,65 @@
                 </table>
             </div>
         </div>
+        @if($perPage !== 'all' && $orders->hasPages())
+        <div class="kk-pagination">
+            <ul>
+                {{-- Previous --}}
+                @if ($orders->onFirstPage())
+                    <li class="disabled"><span>&laquo;</span></li>
+                @else
+                    <li><a href="{{ $orders->appends(request()->query())->previousPageUrl() }}">&laquo;</a></li>
+                @endif
 
+                @php
+                    // Tampilkan maksimal 5 nomor halaman sekaligus, geser sesuai posisi halaman aktif
+                    $currentPage = $orders->currentPage();
+                    $lastPage = $orders->lastPage();
+                    $windowSize = 5;
+
+                    $start = max(1, $currentPage - floor($windowSize / 2));
+                    $end = min($lastPage, $start + $windowSize - 1);
+
+                    // Kalau mepet ke akhir, geser start ke belakang biar tetap 5 angka (kalau cukup)
+                    if ($end - $start + 1 < $windowSize) {
+                        $start = max(1, $end - $windowSize + 1);
+                    }
+                @endphp
+
+                {{-- Tombol ke halaman 1 + "..." kalau start > 1 --}}
+                @if ($start > 1)
+                    <li><a href="{{ $orders->appends(request()->query())->url(1) }}">1</a></li>
+                    @if ($start > 2)
+                        <li class="disabled"><span>&hellip;</span></li>
+                    @endif
+                @endif
+
+                {{-- Nomor halaman dalam window --}}
+                @for ($page = $start; $page <= $end; $page++)
+                    @if ($page == $currentPage)
+                        <li class="active"><span aria-current="page">{{ $page }}</span></li>
+                    @else
+                        <li><a href="{{ $orders->appends(request()->query())->url($page) }}">{{ $page }}</a></li>
+                    @endif
+                @endfor
+
+                {{-- "..." + tombol ke halaman terakhir kalau end < lastPage --}}
+                @if ($end < $lastPage)
+                    @if ($end < $lastPage - 1)
+                        <li class="disabled"><span>&hellip;</span></li>
+                    @endif
+                    <li><a href="{{ $orders->appends(request()->query())->url($lastPage) }}">{{ $lastPage }}</a></li>
+                @endif
+
+                {{-- Next --}}
+                @if ($orders->hasMorePages())
+                    <li><a href="{{ $orders->appends(request()->query())->nextPageUrl() }}">&raquo;</a></li>
+                @else
+                    <li class="disabled"><span>&raquo;</span></li>
+                @endif
+            </ul>
+        </div>
+        @endif
     </main>
 </div>
 

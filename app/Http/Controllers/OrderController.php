@@ -11,28 +11,28 @@ use App\Models\OrderPhoto;
 class OrderController extends Controller
 {
     // ================= PUBLIC =================
-   public function adminDashboard()
-{
-    $totalPesanan = Order::count();
+    public function adminDashboard()
+    {
+        $totalPesanan = Order::count();
 
-    // ✅ Pemasukan kotor = fee jasa + ongkos pilah + fee laundry
-    // (fee laundry hanya dihitung kalau order memang bermitra, ditandai mitra_laundry_id terisi)
-    $totalPemasukan = Order::where('status', 'Selesai')
-        ->selectRaw('SUM(fee + ongkos_pilah + CASE WHEN mitra_laundry_id IS NOT NULL THEN COALESCE(fee_laundry, 0) ELSE 0 END) as total')
-        ->value('total') ?? 0;
+        // ✅ Pemasukan kotor = fee jasa + ongkos pilah + fee laundry
+        // (fee laundry hanya dihitung kalau order memang bermitra, ditandai mitra_laundry_id terisi)
+        $totalPemasukan = Order::where('status', 'Selesai')
+            ->selectRaw('SUM(fee + ongkos_pilah + CASE WHEN mitra_laundry_id IS NOT NULL THEN COALESCE(fee_laundry, 0) ELSE 0 END) as total')
+            ->value('total') ?? 0;
 
-    $pendapatanBersih = Order::where('status', 'Selesai')->sum('penghasilan_bersih_klinklin');
-    $pendapatanDariDriver = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_driver');
-    $pendapatanDariMitra = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_mitra');
+        $pendapatanBersih = Order::where('status', 'Selesai')->sum('penghasilan_bersih_klinklin');
+        $pendapatanDariDriver = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_driver');
+        $pendapatanDariMitra = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_mitra');
 
-    return view('admin.adminindex', compact(
-        'totalPesanan',
-        'totalPemasukan',
-        'pendapatanBersih',
-        'pendapatanDariDriver',
-        'pendapatanDariMitra'
-    ));
-}
+        return view('admin.adminindex', compact(
+            'totalPesanan',
+            'totalPemasukan',
+            'pendapatanBersih',
+            'pendapatanDariDriver',
+            'pendapatanDariMitra'
+        ));
+    }
 
     public function index()
     {
@@ -76,6 +76,10 @@ class OrderController extends Controller
         $data['is_sorted'] = $data['is_sorted'] ?? 0;
         $data['alamat_laundry'] = $data['alamat_laundry'] ?? '-';
 
+        // Order dibuat baru belum pernah kena diskon apa pun,
+        // jadi fee_sebelum_diskon = fee yang diinput di awal.
+        $data['fee_sebelum_diskon'] = $data['fee'];
+
         if (!$data['is_sorted']) {
             $data['dokumentasi_pakaian'] = null;
         }
@@ -116,6 +120,7 @@ class OrderController extends Controller
 
         $data['status'] = 'Unconfirmed';
         $data['fee'] = 0;
+        $data['fee_sebelum_diskon'] = 0;
         $data['is_sorted'] = $data['is_sorted'] ?? 0;
         $data['dokumentasi_pakaian'] = null;
         $data['token'] = $this->generateUniqueToken();
@@ -173,9 +178,29 @@ class OrderController extends Controller
             $query->orderBy($sort, $direction);
         }
 
-        $orders = $query->get();
+        // REPEAT ORDER: nama yang muncul lebih dari 1 kali (dihitung dari SELURUH data,
+        // tidak terpengaruh search/filter/pagination di atas)
+        $repeatCustomers = Order::select('nama', \DB::raw('count(*) as total_order'))
+            ->groupBy('nama')
+            ->having('total_order', '>', 1)
+            ->orderByDesc('total_order')
+            ->get();
 
-        return view('admin.adminOrders', compact('orders'));
+        // FILTER JUMLAH TAMPILAN
+        $perPage = $request->get('per_page', '10');
+        $allowedPerPage = ['10', '20', '50', '100', 'all'];
+
+        if (!in_array($perPage, $allowedPerPage)) {
+            $perPage = '10';
+        }
+
+        if ($perPage === 'all') {
+            $orders = $query->get();
+        } else {
+            $orders = $query->paginate((int) $perPage)->withQueryString();
+        }
+
+        return view('admin.adminOrders', compact('orders', 'repeatCustomers', 'perPage'));
     }
 
     public function adminDetail($id)
@@ -204,10 +229,10 @@ class OrderController extends Controller
             'mitra_laundry_id'        => 'nullable|exists:mitra_laundries,id',
             'promo_id'                => 'nullable|exists:promotions,id',
             'status'                  => 'required|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
-            'fee'                     => 'required|numeric',
-            'ongkos_pilah'            => 'nullable|numeric|min:0', 
-            'fee_laundry'               => 'nullable|numeric|min:0',        // ✅ baru
-            'estimasi_waktu_pengerjaan' => 'nullable|string|max:100',       // ✅ baru
+            'fee_sebelum_diskon'      => 'required|numeric|min:0',
+            'ongkos_pilah'            => 'nullable|numeric|min:0',
+            'fee_laundry'               => 'nullable|numeric|min:0',
+            'estimasi_waktu_pengerjaan' => 'nullable|string|max:100',
             'note'                    => 'nullable|string',
             'dokumentasi_pakaian'     => 'nullable|string',
             'is_sorted'               => 'nullable',
@@ -222,15 +247,21 @@ class OrderController extends Controller
         $data['mitra_laundry_id'] = $data['mitra_laundry_id'] ?? null;
         $data['promo_id'] = $data['promo_id'] ?? null;
 
-        // Hitung fee final di backend (sumber kebenaran), bukan dari input JS.
+        // ✅ FIX: Fee final SELALU dihitung ulang dari fee_sebelum_diskon
+        // (bukan dari fee lama yang sudah tersimpan), supaya diskon promo
+        // tidak terpotong berkali-kali setiap admin menyimpan perubahan
+        // lain (nama, catatan, dsb) selama promo yang sama masih terpasang.
+        $feeFinal = $data['fee_sebelum_diskon'];
+
         if ($data['promo_id']) {
-            $promo = \App\Models\Promotion::find($data['promo_id']);
+            $promo = Promotion::find($data['promo_id']);
             if ($promo) {
                 $diskon = $promo->harga_awal - $promo->harga_promo;
-                $data['diskon_terpakai'] = $diskon; // simpan histori diskon
-                $data['fee'] = max(0, $data['fee'] - $diskon);
+                $feeFinal = max(0, $feeFinal - $diskon);
             }
         }
+
+        $data['fee'] = $feeFinal;
 
         // ✅ FIX BUG: Order bertipe 'Jemput Saja' tidak pernah melalui
         // tahap 'Diproses' / 'Dijemput' / 'Mencari Laundry' — driver untuk
@@ -364,7 +395,7 @@ class OrderController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-        // ================= FOTO BUKTI (ADMIN — full akses, tanpa restriksi) =================
+    // ================= FOTO BUKTI (ADMIN — full akses, tanpa restriksi) =================
 
     public function uploadFotoPengambilan(Request $request, $id)
     {

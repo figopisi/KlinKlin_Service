@@ -11,10 +11,9 @@
 
     <nav class="nav-links">
         <a href="{{ route('index') }}#tentang" data-i18n="nav_about">Tentang Kami</a>
-        <a href="{{ route('index') }}" class="active" data-i18n="nav_home">Beranda</a>
-        <a href="{{ route('promosi.index') }}">Promo</a>
-        <a href="{{ route('pesanan') }}" data-i18n="nav_history">Cek Pesanan</a>
-        
+        <a href="{{ route('index') }}" class="{{ request()->routeIs('index') ? 'active' : '' }}" data-i18n="nav_home">Beranda</a>
+        <a href="{{ route('promosi.index') }}" class="{{ request()->routeIs('promosi.index') ? 'active' : '' }}">Promo</a>
+        <a href="{{ route('pesanan') }}" class="{{ request()->routeIs('pesanan') ? 'active' : '' }}" data-i18n="nav_history">Cek Pesanan</a>
 
         <button class="lang-switch lang-switch-mobile" type="button" aria-label="Ganti bahasa">
             <span class="globe">

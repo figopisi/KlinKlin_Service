@@ -6,27 +6,33 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\MitraLaundry;
 use App\Models\Promotion;
+use App\Models\OrderPhoto;
 
 class OrderController extends Controller
 {
     // ================= PUBLIC =================
-    public function adminDashboard()
-    {
-        $totalPesanan = Order::count();
-        $totalPemasukan = Order::sum('fee');
+   public function adminDashboard()
+{
+    $totalPesanan = Order::count();
 
-        $pendapatanBersih = Order::where('status', 'Selesai')->sum('penghasilan_bersih_klinklin');
-        $pendapatanDariDriver = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_driver'); // ✅ baru
-        $pendapatanDariMitra = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_mitra');   // ✅ baru
+    // ✅ Pemasukan kotor = fee jasa + ongkos pilah + fee laundry
+    // (fee laundry hanya dihitung kalau order memang bermitra, ditandai mitra_laundry_id terisi)
+    $totalPemasukan = Order::where('status', 'Selesai')
+        ->selectRaw('SUM(fee + ongkos_pilah + CASE WHEN mitra_laundry_id IS NOT NULL THEN COALESCE(fee_laundry, 0) ELSE 0 END) as total')
+        ->value('total') ?? 0;
 
-        return view('admin.adminindex', compact(
-            'totalPesanan',
-            'totalPemasukan',
-            'pendapatanBersih',
-            'pendapatanDariDriver',
-            'pendapatanDariMitra'
-        ));
-    }
+    $pendapatanBersih = Order::where('status', 'Selesai')->sum('penghasilan_bersih_klinklin');
+    $pendapatanDariDriver = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_driver');
+    $pendapatanDariMitra = Order::where('status', 'Selesai')->sum('penghasilan_klinklin_dari_mitra');
+
+    return view('admin.adminindex', compact(
+        'totalPesanan',
+        'totalPemasukan',
+        'pendapatanBersih',
+        'pendapatanDariDriver',
+        'pendapatanDariMitra'
+    ));
+}
 
     public function index()
     {
@@ -356,5 +362,84 @@ class OrderController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+        // ================= FOTO BUKTI (ADMIN — full akses, tanpa restriksi) =================
+
+    public function uploadFotoPengambilan(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $request->validate([
+            'foto' => 'required|image|max:5120',
+        ]);
+
+        $result = app(\App\Services\CloudinaryService::class)
+            ->uploadBuktiPengambilan($request->file('foto'), $order->token);
+
+        // hapus foto lama tipe yang sama supaya tidak numpuk
+        $order->photos()->where('type', 'pengambilan')->delete();
+
+        $order->photos()->create([
+            'type'      => 'pengambilan',
+            'url'       => $result['url'],
+            'public_id' => $result['public_id'],
+        ]);
+
+        return back()->with('success', 'Bukti pengambilan berhasil diupload');
+    }
+
+    public function uploadFotoNota(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $request->validate([
+            'foto' => 'required|image|max:5120',
+        ]);
+
+        $result = app(\App\Services\CloudinaryService::class)
+            ->uploadBuktiNota($request->file('foto'), $order->token);
+
+        $order->photos()->where('type', 'nota')->delete();
+
+        $order->photos()->create([
+            'type'      => 'nota',
+            'url'       => $result['url'],
+            'public_id' => $result['public_id'],
+        ]);
+
+        return back()->with('success', 'Bukti nota berhasil diupload');
+    }
+
+    public function uploadFotoPengiriman(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $request->validate([
+            'foto' => 'required|image|max:5120',
+        ]);
+
+        $result = app(\App\Services\CloudinaryService::class)
+            ->uploadBuktiPengiriman($request->file('foto'), $order->token);
+
+        $order->photos()->where('type', 'pengiriman')->delete();
+
+        $order->photos()->create([
+            'type'      => 'pengiriman',
+            'url'       => $result['url'],
+            'public_id' => $result['public_id'],
+        ]);
+
+        return back()->with('success', 'Bukti pengiriman berhasil diupload');
+    }
+
+    public function deleteFotoAdmin($photoId)
+    {
+        $photo = \App\Models\OrderPhoto::findOrFail($photoId);
+
+        app(\App\Services\CloudinaryService::class)->delete($photo->public_id);
+        $photo->delete();
+
+        return back()->with('success', 'Foto berhasil dihapus');
     }
 }

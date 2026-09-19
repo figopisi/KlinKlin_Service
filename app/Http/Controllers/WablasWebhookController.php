@@ -19,6 +19,11 @@ class WablasWebhookController extends Controller
             return response('', 200);
         }
 
+        if ($request->boolean('isFromMe')) {
+            \Log::info('Pesan isFromMe diabaikan', ['phone' => $request->input('phone')]);
+            return response('', 200);
+        }
+
         \Log::info('WABLAS PAYLOAD MASUK:', $request->all());
 
         $phone = $request->input('phone');

@@ -127,7 +127,7 @@
             <p class="reveal" data-reveal="up" style="--delay:.1s" data-i18n="about_desc">Bersama KlinKlin, kami hadir untuk memastikan pakaianmu selalu bersih, segar, dan terawat. Dengan semangat melayani dan teknologi yang terus berkembang, kami berusaha melampaui ekspektasimu setiap saat.</p>
             <div class="about-stats reveal" data-reveal="up" style="--delay:.2s">
                 <div class="stat">
-                    <div class="stat-num">150<span>+</span></div>
+                    <div class="stat-num">200<span>+</span></div>
                     <div class="stat-label" data-i18n-html="about_stat1"><strong>Pesanan</strong> Selesai</div>
                 </div>
                 <span class="stat-divider" aria-hidden="true"></span>
@@ -232,7 +232,7 @@
     <div class="pricing-cards">
         <div class="price-card reveal" data-reveal="up" style="--delay:.1s">
             <div class="pc-label" data-i18n="pc1_label">Mulai dari</div>
-            <div class="pc-price">Rp 12.000</div>
+            <div class="pc-price">Rp 6.000</div>
             <div class="pc-sub" data-i18n-html="pc1_sub">Pada kilometer <strong>Pertama</strong></div>
             <ul class="pc-list">
                 <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc1_a">On Demand</span></li>
@@ -243,7 +243,7 @@
 
         <div class="price-card reveal" data-reveal="up" style="--delay:.2s">
             <div class="pc-label" data-i18n="pc2_label">Dilanjutkan hanya</div>
-            <div class="pc-price">Rp 3.000</div>
+            <div class="pc-price">Rp 2.000</div>
             <div class="pc-sub" data-i18n-html="pc2_sub">Pada kilometer <strong>Selanjutnya</strong></div>
             <ul class="pc-list">
                 <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="pc2_a">Lebih jauh lebih murah</span></li>

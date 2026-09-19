@@ -34,6 +34,87 @@
         color:var(--ink);
         -webkit-font-smoothing:antialiased;
     }
+
+    /* ===== LAYOUT: SIDEBAR + MAIN ===== */
+    /* Konten promo di bawah TETAP pakai variabel/style aslinya (tidak diubah).
+       Sidebar di sini sengaja disamakan persis (class kk-*, warna, ukuran)
+       dengan sidebar di dashboard / daftar pesanan / detail pesanan, supaya
+       menu terlihat konsisten di semua halaman admin. Di-scope di dalam
+       #kk-sidebar-scope agar tidak bentrok dengan style promo di bawahnya. */
+    #kk-sidebar-scope, #kk-sidebar-scope *{ box-sizing:border-box; }
+    #kk-sidebar-scope{
+        --kk-surface:#FFFFFF;
+        --kk-ink:#14171F;
+        --kk-ink-soft:#6B7080;
+        --kk-line:#E7E9F0;
+        --kk-brand:#2F5DFF;
+        --kk-brand-ink:#1B2A6B;
+        --kk-brand-soft:#EAF0FF;
+        --kk-danger:#C4342B;
+        --kk-danger-soft:#FCEEEE;
+        font-family:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .app-shell{
+        display:flex;
+        align-items:stretch;
+        min-height:100vh;
+    }
+    #kk-sidebar-scope.kk-sidebar{
+        width:250px;
+        flex-shrink:0;
+        background:var(--kk-surface);
+        border-right:1px solid var(--kk-line);
+        padding:24px 16px;
+        position:sticky;
+        top:0;
+        height:100vh;
+        display:flex;
+        flex-direction:column;
+    }
+    #kk-sidebar-scope .kk-brand{ display:flex; align-items:center; gap:10px; padding:4px 10px 24px; }
+    #kk-sidebar-scope .kk-brand-mark{
+        width:34px; height:34px; border-radius:9px;
+        background:linear-gradient(135deg, var(--kk-brand), #6E8CFF);
+        color:#fff; display:flex; align-items:center; justify-content:center;
+        font-weight:800; font-size:15px;
+    }
+    #kk-sidebar-scope .kk-brand-text{ line-height:1.2; }
+    #kk-sidebar-scope .kk-brand-text strong{ display:block; font-size:15px; font-weight:800; color:var(--kk-ink); }
+    #kk-sidebar-scope .kk-brand-text span{ font-size:11.5px; color:var(--kk-ink-soft); }
+
+    #kk-sidebar-scope .kk-nav-label{
+        font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+        color:var(--kk-ink-soft); padding:10px 10px 6px;
+    }
+    #kk-sidebar-scope .kk-nav{ list-style:none; margin:0 0 8px; padding:0; display:flex; flex-direction:column; gap:2px; }
+    #kk-sidebar-scope .kk-nav a{
+        display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+        text-decoration:none; color:var(--kk-ink); font-size:14px; font-weight:600;
+        transition:background .15s ease, color .15s ease;
+    }
+    #kk-sidebar-scope .kk-nav a:hover{ background:var(--kk-brand-soft); color:var(--kk-brand-ink); }
+    #kk-sidebar-scope .kk-nav a.is-active{ background:var(--kk-brand); color:#fff; }
+    #kk-sidebar-scope .kk-nav a .kk-ico{ width:18px; text-align:center; font-size:15px; }
+
+    #kk-sidebar-scope .kk-sidebar-foot{ margin-top:auto; padding-top:16px; border-top:1px solid var(--kk-line); }
+    #kk-sidebar-scope .kk-logout-btn{
+        width:100%; background:var(--kk-danger-soft); color:var(--kk-danger); border:none;
+        padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:700; font-size:13.5px;
+        font-family:inherit; transition:background-color .15s ease;
+    }
+    #kk-sidebar-scope .kk-logout-btn:hover{ background:#F8DCDA; }
+
+    .main-content{
+        flex:1;
+        min-width:0;
+    }
+
+    @media (max-width: 980px){
+        #kk-sidebar-scope.kk-sidebar{ width:100%; height:auto; position:relative; flex-direction:row; flex-wrap:wrap; }
+        #kk-sidebar-scope .kk-sidebar-foot{ margin-top:12px; padding-top:12px; }
+    }
+
     .wrap{
         max-width:1160px;
         margin:0 auto;
@@ -441,6 +522,10 @@
     .modal-confirm-danger{ background:var(--danger); color:#fff; }
     .modal-confirm-brand{ background:var(--brand); color:#fff; }
 
+    @media (max-width: 980px){
+        .app-shell{ flex-direction:column; }
+    }
+
     @media (max-width: 720px){
         .stat-strip{ grid-template-columns:repeat(2,1fr); }
         .promo-row{ grid-template-columns:1fr; }
@@ -478,153 +563,188 @@
     </div>
 </div>
 
-<div class="wrap">
+<div class="app-shell">
 
-    <div class="page-header">
-        <div>
-            <a href="/admin/dashboard" class="back-link">&larr; Kembali ke Dashboard</a>
-            <span class="eyebrow">Manajemen Promo</span>
-            <h1>Promo &amp; Diskon</h1>
-            <p>Kelola semua promo yang tampil ke pelanggan dari satu tempat.</p>
+    <!-- SIDEBAR: sama persis dengan dashboard / daftar pesanan / detail pesanan -->
+    <aside class="kk-sidebar" id="kk-sidebar-scope">
+        <div class="kk-brand">
+            <div class="kk-brand-mark">KK</div>
+            <div class="kk-brand-text">
+                <strong>KlinKlin</strong>
+                <span>Admin Panel</span>
+            </div>
         </div>
-        <a href="{{ route('admin.promosi.create') }}" class="btn-new">+ Buat Promo Baru</a>
-    </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-error">{{ session('error') }}</div>
-    @endif
+        <div class="kk-nav-label">Menu</div>
+        <ul class="kk-nav">
+            <li><a href="{{ route('admin.dashboard') }}"><span class="kk-ico">&#9632;</span> Dashboard</a></li>
+            <li><a href="{{ route('admin.orders') }}"><span class="kk-ico">&#9776;</span> Semua Pesanan</a></li>
+            <li><a href="{{ route('admin.promosi.index') }}" class="is-active"><span class="kk-ico">&#9733;</span> Manajemen Promo</a></li>
+            <li><a href="{{ route('admin.drivers.index') }}"><span class="kk-ico">&#128663;</span> Manajemen Driver</a></li>
+            <li><a href="{{ route('admin.mitra.index') }}"><span class="kk-ico">&#127974;</span> Manajemen Mitra Laundry</a></li>
+            <li><a href="{{ route('admin.verifikasi-profile') }}"><span class="kk-ico">&#10003;</span> Verifikasi Profile</a></li>
+        </ul>
 
-    @php
-        $totalPromo   = $promotions->count();
-        $totalAktif   = $promotions->where('is_active', true)->count();
-        $totalNonaktif= $promotions->where('is_active', false)->count();
-        $totalHabis   = $promotions->filter(function($p){
-            return $p->kuota !== null && $p->terpakai >= $p->kuota;
-        })->count();
-    @endphp
+        <div class="kk-sidebar-foot">
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="kk-logout-btn">Logout</button>
+            </form>
+        </div>
+    </aside>
 
-    <div class="stat-strip">
-        <div class="stat-box">
-            <div class="num">{{ $totalPromo }}</div>
-            <div class="label">Total Promo</div>
-        </div>
-        <div class="stat-box brand">
-            <div class="num">{{ $totalAktif }}</div>
-            <div class="label">Sedang Aktif</div>
-        </div>
-        <div class="stat-box muted">
-            <div class="num">{{ $totalNonaktif }}</div>
-            <div class="label">Nonaktif</div>
-        </div>
-        <div class="stat-box accent">
-            <div class="num">{{ $totalHabis }}</div>
-            <div class="label">Kuota Habis</div>
-        </div>
-    </div>
+    <!-- MAIN CONTENT (isi asli halaman, tidak diubah styling-nya) -->
+    <div class="main-content">
+    <div class="wrap">
 
-    <div class="filter-row">
-        <div class="tabs">
-            <button class="tab-btn active" onclick="filterPromo('all', this)">
-                Semua <span class="tab-count">{{ $totalPromo }}</span>
-            </button>
-            <button class="tab-btn" onclick="filterPromo('active', this)">
-                Aktif <span class="tab-count">{{ $totalAktif }}</span>
-            </button>
-            <button class="tab-btn" onclick="filterPromo('inactive', this)">
-                Nonaktif <span class="tab-count">{{ $totalNonaktif }}</span>
-            </button>
+        <div class="page-header">
+            <div>
+                <a href="/admin/dashboard" class="back-link">&larr; Kembali ke Dashboard</a>
+                <span class="eyebrow">Manajemen Promo</span>
+                <h1>Promo &amp; Diskon</h1>
+                <p>Kelola semua promo yang tampil ke pelanggan dari satu tempat.</p>
+            </div>
+            <a href="{{ route('admin.promosi.create') }}" class="btn-new">+ Buat Promo Baru</a>
         </div>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Cari nama promo..." onkeyup="searchPromo()">
+
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-error">{{ session('error') }}</div>
+        @endif
+
+        @php
+            $totalPromo   = $promotions->count();
+            $totalAktif   = $promotions->where('is_active', true)->count();
+            $totalNonaktif= $promotions->where('is_active', false)->count();
+            $totalHabis   = $promotions->filter(function($p){
+                return $p->kuota !== null && $p->terpakai >= $p->kuota;
+            })->count();
+        @endphp
+
+        <div class="stat-strip">
+            <div class="stat-box">
+                <div class="num">{{ $totalPromo }}</div>
+                <div class="label">Total Promo</div>
+            </div>
+            <div class="stat-box brand">
+                <div class="num">{{ $totalAktif }}</div>
+                <div class="label">Sedang Aktif</div>
+            </div>
+            <div class="stat-box muted">
+                <div class="num">{{ $totalNonaktif }}</div>
+                <div class="label">Nonaktif</div>
+            </div>
+            <div class="stat-box accent">
+                <div class="num">{{ $totalHabis }}</div>
+                <div class="label">Kuota Habis</div>
+            </div>
         </div>
-    </div>
 
-    <div class="promo-list" id="promoList">
-        @forelse($promotions as $promo)
-            @php
-                $habis = $promo->kuota !== null && $promo->terpakai >= $promo->kuota;
-                $expired = $promo->tanggal_selesai && now()->gt($promo->tanggal_selesai);
-            @endphp
-            <div class="promo-row {{ !$promo->is_active ? 'inactive' : '' }}"
-                 data-status="{{ $promo->is_active ? 'active' : 'inactive' }}"
-                 data-name="{{ strtolower($promo->nama_promo) }}">
+        <div class="filter-row">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="filterPromo('all', this)">
+                    Semua <span class="tab-count">{{ $totalPromo }}</span>
+                </button>
+                <button class="tab-btn" onclick="filterPromo('active', this)">
+                    Aktif <span class="tab-count">{{ $totalAktif }}</span>
+                </button>
+                <button class="tab-btn" onclick="filterPromo('inactive', this)">
+                    Nonaktif <span class="tab-count">{{ $totalNonaktif }}</span>
+                </button>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Cari nama promo..." onkeyup="searchPromo()">
+            </div>
+        </div>
 
-                <div class="promo-info">
-                    <div class="name">{{ $promo->nama_promo }}</div>
-                    @if($promo->deskripsi)
-                        <div class="desc">{{ $promo->deskripsi }}</div>
-                    @endif
-                    <div class="meta">
-                        @if($promo->tanggal_mulai || $promo->tanggal_selesai)
-                            <span class="meta-chip {{ $expired ? 'warn' : '' }}">
-                                📅 {{ $promo->tanggal_mulai ? \Carbon\Carbon::parse($promo->tanggal_mulai)->translatedFormat('d M Y') : '—' }}
-                                &rarr;
-                                {{ $promo->tanggal_selesai ? \Carbon\Carbon::parse($promo->tanggal_selesai)->translatedFormat('d M Y') : '—' }}
-                                @if($expired) (Berakhir) @endif
-                            </span>
+        <div class="promo-list" id="promoList">
+            @forelse($promotions as $promo)
+                @php
+                    $habis = $promo->kuota !== null && $promo->terpakai >= $promo->kuota;
+                    $expired = $promo->tanggal_selesai && now()->gt($promo->tanggal_selesai);
+                @endphp
+                <div class="promo-row {{ !$promo->is_active ? 'inactive' : '' }}"
+                     data-status="{{ $promo->is_active ? 'active' : 'inactive' }}"
+                     data-name="{{ strtolower($promo->nama_promo) }}">
+
+                    <div class="promo-info">
+                        <div class="name">{{ $promo->nama_promo }}</div>
+                        @if($promo->deskripsi)
+                            <div class="desc">{{ $promo->deskripsi }}</div>
                         @endif
-                        @if($promo->kuota !== null)
-                            <span class="meta-chip {{ $habis ? 'warn' : '' }}">
-                                🎟️ {{ $promo->terpakai }}/{{ $promo->kuota }} terpakai
-                                @if($habis) (Habis) @endif
-                            </span>
-                        @endif
+                        <div class="meta">
+                            @if($promo->tanggal_mulai || $promo->tanggal_selesai)
+                                <span class="meta-chip {{ $expired ? 'warn' : '' }}">
+                                    📅 {{ $promo->tanggal_mulai ? \Carbon\Carbon::parse($promo->tanggal_mulai)->translatedFormat('d M Y') : '—' }}
+                                    &rarr;
+                                    {{ $promo->tanggal_selesai ? \Carbon\Carbon::parse($promo->tanggal_selesai)->translatedFormat('d M Y') : '—' }}
+                                    @if($expired) (Berakhir) @endif
+                                </span>
+                            @endif
+                            @if($promo->kuota !== null)
+                                <span class="meta-chip {{ $habis ? 'warn' : '' }}">
+                                    🎟️ {{ $promo->terpakai }}/{{ $promo->kuota }} terpakai
+                                    @if($habis) (Habis) @endif
+                                </span>
+                            @endif
+                        </div>
                     </div>
-                </div>
 
-                <div class="price-tag">
-                    <span class="off">-{{ $promo->persen_diskon }}%</span>
-                    <span class="old">Rp{{ number_format($promo->harga_awal, 0, ',', '.') }}</span>
-                    <span class="new">Rp{{ number_format($promo->harga_promo, 0, ',', '.') }}</span>
-                </div>
+                    <div class="price-tag">
+                        <span class="off">-{{ $promo->persen_diskon }}%</span>
+                        <span class="old">Rp{{ number_format($promo->harga_awal, 0, ',', '.') }}</span>
+                        <span class="new">Rp{{ number_format($promo->harga_promo, 0, ',', '.') }}</span>
+                    </div>
 
-                <div class="toggle-wrap">
-                    <form id="formToggle{{ $promo->id }}"
-                          action="{{ route('admin.promosi.update', $promo->id) }}"
-                          method="POST" style="display:none;">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="nama_promo" value="{{ $promo->nama_promo }}">
-                        <input type="hidden" name="deskripsi" value="{{ $promo->deskripsi }}">
-                        <input type="hidden" name="harga_awal" value="{{ $promo->harga_awal }}">
-                        <input type="hidden" name="harga_promo" value="{{ $promo->harga_promo }}">
-                        <input type="hidden" name="kuota" value="{{ $promo->kuota }}">
-                        <input type="hidden" name="tanggal_mulai" value="{{ $promo->tanggal_mulai }}">
-                        <input type="hidden" name="tanggal_selesai" value="{{ $promo->tanggal_selesai }}">
-                        <input type="hidden" name="is_active" value="{{ $promo->is_active ? '0' : '1' }}">
-                    </form>
-                    <label class="switch">
-                        <input type="checkbox" {{ $promo->is_active ? 'checked' : '' }}
-                               onclick="event.preventDefault(); bukaModalToggle('formToggle{{ $promo->id }}', '{{ addslashes($promo->nama_promo) }}', {{ $promo->is_active ? 'true' : 'false' }})">
-                        <span class="slider"></span>
-                    </label>
-                    <span class="toggle-label">{{ $promo->is_active ? 'AKTIF' : 'OFF' }}</span>
-                </div>
+                    <div class="toggle-wrap">
+                        <form id="formToggle{{ $promo->id }}"
+                              action="{{ route('admin.promosi.update', $promo->id) }}"
+                              method="POST" style="display:none;">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="nama_promo" value="{{ $promo->nama_promo }}">
+                            <input type="hidden" name="deskripsi" value="{{ $promo->deskripsi }}">
+                            <input type="hidden" name="harga_awal" value="{{ $promo->harga_awal }}">
+                            <input type="hidden" name="harga_promo" value="{{ $promo->harga_promo }}">
+                            <input type="hidden" name="kuota" value="{{ $promo->kuota }}">
+                            <input type="hidden" name="tanggal_mulai" value="{{ $promo->tanggal_mulai }}">
+                            <input type="hidden" name="tanggal_selesai" value="{{ $promo->tanggal_selesai }}">
+                            <input type="hidden" name="is_active" value="{{ $promo->is_active ? '0' : '1' }}">
+                        </form>
+                        <label class="switch">
+                            <input type="checkbox" {{ $promo->is_active ? 'checked' : '' }}
+                                   onclick="event.preventDefault(); bukaModalToggle('formToggle{{ $promo->id }}', '{{ addslashes($promo->nama_promo) }}', {{ $promo->is_active ? 'true' : 'false' }})">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="toggle-label">{{ $promo->is_active ? 'AKTIF' : 'OFF' }}</span>
+                    </div>
 
-                <div class="row-actions">
-                    <a href="{{ route('admin.promosi.edit', $promo->id) }}" class="icon-btn" title="Edit">✏️</a>
-                    <form id="formHapus{{ $promo->id }}"
-                          action="{{ route('admin.promosi.destroy', $promo->id) }}"
-                          method="POST" style="display:none;">
-                        @csrf
-                        @method('DELETE')
-                    </form>
-                    <button type="button" class="icon-btn danger" title="Hapus"
-                            onclick="bukaModalHapus('formHapus{{ $promo->id }}', '{{ addslashes($promo->nama_promo) }}')">🗑️</button>
-                </div>
+                    <div class="row-actions">
+                        <a href="{{ route('admin.promosi.edit', $promo->id) }}" class="icon-btn" title="Edit">✏️</a>
+                        <form id="formHapus{{ $promo->id }}"
+                              action="{{ route('admin.promosi.destroy', $promo->id) }}"
+                              method="POST" style="display:none;">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                        <button type="button" class="icon-btn danger" title="Hapus"
+                                onclick="bukaModalHapus('formHapus{{ $promo->id }}', '{{ addslashes($promo->nama_promo) }}')">🗑️</button>
+                    </div>
 
-            </div>
-        @empty
-            <div class="empty-state">
-                <div class="icon">🏷️</div>
-                <h3>Belum ada promo</h3>
-                <p>Buat promo pertama untuk mulai menarik pelanggan.</p>
-                <a href="{{ route('admin.promosi.create') }}" class="btn-new">+ Buat Promo Baru</a>
-            </div>
-        @endforelse
+                </div>
+            @empty
+                <div class="empty-state">
+                    <div class="icon">🏷️</div>
+                    <h3>Belum ada promo</h3>
+                    <p>Buat promo pertama untuk mulai menarik pelanggan.</p>
+                    <a href="{{ route('admin.promosi.create') }}" class="btn-new">+ Buat Promo Baru</a>
+                </div>
+            @endforelse
+        </div>
+
+    </div>
     </div>
 
 </div>

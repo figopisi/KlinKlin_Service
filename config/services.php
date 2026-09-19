@@ -42,8 +42,8 @@ return [
         'driver_group_id' => env('WABLAS_DRIVER_GROUP_ID'),
         'admin_group_id'  => env('WABLAS_ADMIN_GROUP_ID'),
         'cs_admins' => [
-            ['nama' => 'Admin 1', 'phone' => '628xxxxxxxxxx'],
-            ['nama' => 'Admin 2', 'phone' => '628xxxxxxxxxx'],
+            ['nama' => 'Admin Lidya', 'phone' => '6281237721643'],
+            ['nama' => 'Admin Rita', 'phone' => '6287832590628'],
         ],
     ],
 

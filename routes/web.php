@@ -5,6 +5,10 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\CustomerProfileController;
+use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\DriverManagementController;
+use App\Http\Controllers\MitraLaundryController;
+use App\Http\Controllers\WablasWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,6 +64,9 @@ Route::post('/admin/logout', [AuthController::class, 'logout'])
     ->middleware('auth.admin')
     ->name('logout');
 
+// NOTE: dua route ini sebaiknya sebenarnya juga masuk grup auth.admin di
+// bawah (destroy & export data pesanan seharusnya butuh login admin).
+// Dibiarkan posisinya sesuai aslinya, tapi ditandai untuk direview.
 Route::delete('/orders/{id}', [OrderController::class, 'destroy'])
     ->name('admin.orders.destroy');
 
@@ -68,7 +75,8 @@ Route::get('/orders/export', [OrderController::class, 'exportCsv'])
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN (PROTECTED)
+| ADMIN (PROTECTED) — semua route admin, termasuk upload foto,
+| sekarang konsisten di dalam middleware auth.admin
 |--------------------------------------------------------------------------
 */
 
@@ -89,19 +97,70 @@ Route::prefix('admin')->middleware('auth.admin')->group(function () {
     Route::post('/orders/{id}/nullify-driver', [OrderController::class, 'nullifyDriver'])
         ->name('admin.orders.nullifyDriver');
 
+    // ✅ FIX: upload/hapus foto admin sekarang pakai method khusus admin di
+    // OrderController (bukan DriverController::uploadBuktiPengambilan dkk),
+    // supaya tidak kena guard session('driver_id') yang selalu null untuk
+    // admin. Sekaligus sekarang terlindungi middleware auth.admin.
+    Route::post('/pesanan/{id}/foto/pengambilan', [OrderController::class, 'uploadFotoPengambilan'])
+        ->name('admin.foto.pengambilan');
+    Route::post('/pesanan/{id}/foto/nota', [OrderController::class, 'uploadFotoNota'])
+        ->name('admin.foto.nota');
+    Route::post('/pesanan/{id}/foto/pengiriman', [OrderController::class, 'uploadFotoPengiriman'])
+        ->name('admin.foto.pengiriman');
+    Route::delete('/foto/{photoId}', [OrderController::class, 'deleteFotoAdmin'])
+        ->name('admin.foto.delete');
+
     Route::get('/verifikasi-profile', [CustomerProfileController::class, 'index'])
         ->name('admin.verifikasi-profile');
 
     Route::post('/verifikasi-profile/{profile}', [CustomerProfileController::class, 'updateStatus'])
         ->name('admin.verifikasi-profile.update');
+
+    // ---- Promosi (admin) ----
+    Route::get('/promosi', [PromotionController::class, 'adminIndex'])->name('admin.promosi.index');
+    Route::get('/promosi/create', [PromotionController::class, 'create'])->name('admin.promosi.create');
+    Route::post('/promosi', [PromotionController::class, 'store'])->name('admin.promosi.store');
+    Route::get('/promosi/{promosi}/edit', [PromotionController::class, 'edit'])->name('admin.promosi.edit');
+    Route::put('/promosi/{promosi}', [PromotionController::class, 'update'])->name('admin.promosi.update');
+    Route::delete('/promosi/{promosi}', [PromotionController::class, 'destroy'])->name('admin.promosi.destroy');
+
+    // ---- Manajemen Driver (admin) ----
+    Route::prefix('drivers')->name('admin.drivers.')->group(function () {
+        Route::get('/', [DriverManagementController::class, 'index'])->name('index');
+        Route::post('/', [DriverManagementController::class, 'store'])->name('store');
+        Route::get('/{id}', [DriverManagementController::class, 'show'])->name('show');
+        Route::post('/{id}/toggle-active', [DriverManagementController::class, 'toggleActive'])->name('toggleActive');
+        Route::post('/{id}/reset-password', [DriverManagementController::class, 'resetPassword'])->name('resetPassword');
+        Route::post('/{id}/document', [DriverManagementController::class, 'uploadDocument'])->name('document.upload');
+        Route::delete('/{id}/document', [DriverManagementController::class, 'deleteDocument'])->name('document.delete');
+    });
+
+    // ---- Manajemen Mitra Laundry (admin) ----
+    Route::prefix('mitra')->name('admin.mitra.')->group(function () {
+        Route::get('/', [MitraLaundryController::class, 'index'])->name('index');
+        Route::post('/', [MitraLaundryController::class, 'store'])->name('store');
+        Route::put('/{id}', [MitraLaundryController::class, 'update'])->name('update');
+        Route::post('/{id}/toggle-status', [MitraLaundryController::class, 'toggleStatus'])->name('toggleStatus');
+        Route::get('/{id}', [MitraLaundryController::class, 'show'])->name('show');
+    });
 });
 
-// Driver Auth
+/*
+|--------------------------------------------------------------------------
+| DRIVER AUTH
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/driver/login', [AuthController::class, 'showDriverLogin'])->name('driver.login');
 Route::post('/driver/login', [AuthController::class, 'driverLogin'])->name('driver.login.post');
 Route::post('/driver/logout', [AuthController::class, 'driverLogout'])->name('driver.logout');
 
-// Driver Dashboard (dilindungi middleware)
+/*
+|--------------------------------------------------------------------------
+| DRIVER DASHBOARD (PROTECTED)
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware(['auth.driver'])->prefix('driver')->name('driver.')->group(function () {
     Route::get('/dashboard', [DriverController::class, 'dashboard'])->name('dashboard');
     Route::post('/ambil/{id}', [DriverController::class, 'ambilPesanan'])->name('ambil');
@@ -110,53 +169,28 @@ Route::middleware(['auth.driver'])->prefix('driver')->name('driver.')->group(fun
 
     Route::get('/pesanan/{id}', [DriverController::class, 'detail'])->name('pesanan.detail');
     Route::post('/pesanan/{id}/update', [DriverController::class, 'updateByDriver'])->name('pesanan.update');
+
+    // ✅ Foto milik driver dipindah ke dalam grup auth.driver juga,
+    // supaya konsisten terproteksi (sebelumnya berada di luar middleware).
+    Route::post('/pesanan/{id}/foto/pengambilan', [DriverController::class, 'uploadBuktiPengambilan'])->name('foto.pengambilan');
+    Route::post('/pesanan/{id}/foto/nota', [DriverController::class, 'uploadBuktiNota'])->name('foto.nota');
+    Route::post('/pesanan/{id}/foto/pengiriman', [DriverController::class, 'uploadBuktiPengiriman'])->name('foto.pengiriman');
+    Route::delete('/foto/{photoId}', [DriverController::class, 'deleteFoto'])->name('foto.delete');
 });
 
-Route::post('/driver/pesanan/{id}/foto/pengambilan', [DriverController::class, 'uploadBuktiPengambilan'])->name('driver.foto.pengambilan');
-Route::post('/driver/pesanan/{id}/foto/nota', [DriverController::class, 'uploadBuktiNota'])->name('driver.foto.nota');
-Route::post('/driver/pesanan/{id}/foto/pengiriman', [DriverController::class, 'uploadBuktiPengiriman'])->name('driver.foto.pengiriman');
-Route::delete('/driver/foto/{photoId}', [DriverController::class, 'deleteFoto'])->name('driver.foto.delete');
-
-Route::post('/admin/pesanan/{id}/foto/pengambilan', [DriverController::class, 'uploadBuktiPengambilan'])->name('admin.foto.pengambilan');
-Route::post('/admin/pesanan/{id}/foto/nota', [DriverController::class, 'uploadBuktiNota'])->name('admin.foto.nota');
-Route::post('/admin/pesanan/{id}/foto/pengiriman', [DriverController::class, 'uploadBuktiPengiriman'])->name('admin.foto.pengiriman');
-Route::delete('/admin/foto/{photoId}', [DriverController::class, 'deleteFoto'])->name('admin.foto.delete');
-
-// Promotion routes
-use App\Http\Controllers\PromotionController;
+/*
+|--------------------------------------------------------------------------
+| PROMOSI (PUBLIC)
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/promosi', [PromotionController::class, 'index'])
     ->name('promosi.index');
 
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/promosi', [PromotionController::class, 'adminIndex'])->name('promosi.index');
-    Route::get('/promosi/create', [PromotionController::class, 'create'])->name('promosi.create');
-    Route::post('/promosi', [PromotionController::class, 'store'])->name('promosi.store');
-    Route::get('/promosi/{promosi}/edit', [PromotionController::class, 'edit'])->name('promosi.edit');
-    Route::put('/promosi/{promosi}', [PromotionController::class, 'update'])->name('promosi.update');
-    Route::delete('/promosi/{promosi}', [PromotionController::class, 'destroy'])->name('promosi.destroy');
-});
-
-use App\Http\Controllers\DriverManagementController;
-
-Route::prefix('admin/drivers')->name('admin.drivers.')->group(function () {
-    Route::get('/', [DriverManagementController::class, 'index'])->name('index');
-    Route::post('/', [DriverManagementController::class, 'store'])->name('store');
-    Route::get('/{id}', [DriverManagementController::class, 'show'])->name('show');
-    Route::post('/{id}/toggle-active', [DriverManagementController::class, 'toggleActive'])->name('toggleActive');
-    Route::post('/{id}/reset-password', [DriverManagementController::class, 'resetPassword'])->name('resetPassword');
-    Route::post('/{id}/document', [DriverManagementController::class, 'uploadDocument'])->name('document.upload');
-    Route::delete('/{id}/document', [DriverManagementController::class, 'deleteDocument'])->name('document.delete');
-});
-
-use App\Http\Controllers\MitraLaundryController;
-
-Route::get('/admin/mitra', [MitraLaundryController::class, 'index'])->name('admin.mitra.index');
-Route::post('/admin/mitra', [MitraLaundryController::class, 'store'])->name('admin.mitra.store');
-Route::put('/admin/mitra/{id}', [MitraLaundryController::class, 'update'])->name('admin.mitra.update');
-Route::post('/admin/mitra/{id}/toggle-status', [MitraLaundryController::class, 'toggleStatus'])->name('admin.mitra.toggleStatus');
-Route::get('/admin/mitra/{id}', [MitraLaundryController::class, 'show'])->name('admin.mitra.show');
-
-use App\Http\Controllers\WablasWebhookController;
+/*
+|--------------------------------------------------------------------------
+| WEBHOOK
+|--------------------------------------------------------------------------
+*/
 
 Route::post('/webhook/wablas/inbound', [WablasWebhookController::class, 'handle']);

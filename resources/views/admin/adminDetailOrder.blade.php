@@ -580,6 +580,14 @@
                     </div>
 
                     <div class="kk-field">
+                        <label>Ongkos Pilah</label>
+                        <input type="number" name="ongkos_pilah"
+                            value="{{ old('ongkos_pilah', $order->ongkos_pilah) }}"
+                            placeholder="Contoh: 5000">
+                        <small>Diisi manual oleh admin, tidak lagi dihitung otomatis dari berat kg.</small>
+                    </div>
+
+                    <div class="kk-field">
                         <label>Fee Laundry</label>
                         <input type="number" name="fee_laundry"
                             value="{{ old('fee_laundry', $order->fee_laundry) }}"

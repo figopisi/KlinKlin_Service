@@ -62,6 +62,7 @@ class OrderController extends Controller
             'alamat_customer'         => 'required|string',
             'alamat_laundry'          => 'nullable|string',
             'phone_laundry'           => 'nullable|string|max:20',
+            'ongkos_pilah'            => 'nullable|integer|min:0', // ✅ baru
             'fee'                     => 'required|integer|min:0',
             'is_sorted'               => 'nullable|boolean',
             'note'                    => 'nullable|string',

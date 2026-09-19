@@ -70,14 +70,6 @@ class Order extends Model
     {
         // --- Hitung snapshot penghasilan sebelum disimpan ---
         static::saving(function (Order $order) {
-            // ✅ Hitung ongkos_pilah otomatis dari estimasi_jumlah_laundry, hanya jika is_sorted true
-            if ($order->is_sorted) {
-                $beratKg = $order->extractBeratKg($order->estimasi_jumlah_laundry);
-                $order->ongkos_pilah = $beratKg ? floor($beratKg) * 1000 : 0;
-            } else {
-                $order->ongkos_pilah = 0;
-            }
-
             if ($order->status === 'Selesai') {
                 $order->hitungPenghasilan();
             }

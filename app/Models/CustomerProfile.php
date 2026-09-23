@@ -29,4 +29,31 @@ class CustomerProfile extends Model
             }
         });
     }
+
+    // ---------- Relasi Bundle ----------
+
+    public function bundlePurchases()
+    {
+        return $this->hasMany(BundlePurchase::class, 'customer_id');
+    }
+
+    // Bundle yang sedang aktif & masih bisa dipakai (status disetujui, belum expired)
+    public function activeBundle()
+    {
+        return $this->hasOne(BundlePurchase::class, 'customer_id')
+            ->where('status', 'disetujui')
+            ->where(function ($q) {
+                $q->whereNull('tanggal_berakhir')
+                  ->orWhere('tanggal_berakhir', '>=', now());
+            })
+            ->latest('tanggal_mulai');
+    }
+
+    // Pengajuan bundle yang masih menunggu approval admin
+    public function pendingBundlePurchase()
+    {
+        return $this->hasOne(BundlePurchase::class, 'customer_id')
+            ->where('status', 'pending')
+            ->latest('created_at');
+    }
 }

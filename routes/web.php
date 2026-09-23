@@ -9,6 +9,7 @@ use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\DriverManagementController;
 use App\Http\Controllers\MitraLaundryController;
 use App\Http\Controllers\WablasWebhookController;
+use App\Http\Controllers\BundlePurchaseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,12 @@ Route::get('/dashboard', function () {
 
 Route::get('/pesanan', [OrderController::class, 'index'])->name('pesanan');
 Route::get('/pesanan/search', [OrderController::class, 'search'])->name('pesanan.search');
+
+// ================= PUBLIC =================
+Route::get('/bundle', [BundlePurchaseController::class, 'index'])->name('bundle.index');
+Route::post('/bundle/beli', [BundlePurchaseController::class, 'store'])->name('bundle.store');
+Route::post('/bundle/check-active', [BundlePurchaseController::class, 'checkActive'])->name('bundle.checkActive');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -116,6 +123,13 @@ Route::prefix('admin')->middleware('auth.admin')->group(function () {
     Route::post('/verifikasi-profile/{profile}', [CustomerProfileController::class, 'updateStatus'])
         ->name('admin.verifikasi-profile.update');
 
+        // ---- Bundle (admin) ----
+    Route::prefix('bundle-purchases')->name('admin.bundlePurchases.')->group(function () {
+        Route::get('/', [BundlePurchaseController::class, 'adminIndex'])->name('index');
+        Route::post('/{id}/approve', [BundlePurchaseController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [BundlePurchaseController::class, 'reject'])->name('reject');
+    });
+
     // ---- Promosi (admin) ----
     Route::get('/promosi', [PromotionController::class, 'adminIndex'])->name('admin.promosi.index');
     Route::get('/promosi/create', [PromotionController::class, 'create'])->name('admin.promosi.create');
@@ -194,3 +208,4 @@ Route::get('/promosi', [PromotionController::class, 'index'])
 */
 
 Route::post('/webhook/wablas/inbound', [WablasWebhookController::class, 'handle']);
+

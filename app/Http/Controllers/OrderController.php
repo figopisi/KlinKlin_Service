@@ -7,6 +7,9 @@ use App\Models\Order;
 use App\Models\MitraLaundry;
 use App\Models\Promotion;
 use App\Models\OrderPhoto;
+ use App\Models\BundlePurchase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -54,54 +57,86 @@ class OrderController extends Controller
     }
 
     // ================= BUAT PESANAN =================
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'nama'                    => 'required|string|max:100',
-            'phone'                   => 'required|string|max:20',
-            'alamat_customer'         => 'required|string',
-            'alamat_laundry'          => 'nullable|string',
-            'phone_laundry'           => 'nullable|string|max:20',
-            'ongkos_pilah'            => 'nullable|integer|min:0', // ✅ baru
-            'fee'                     => 'required|integer|min:0',
-            'is_sorted'               => 'nullable|boolean',
-            'note'                    => 'nullable|string',
-            'status'                  => 'nullable|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
-            'dokumentasi_pakaian'     => 'nullable|url|max:500',
-            'tanggal_penjemputan'     => 'required|date_format:Y-m-d H:i',
-            'jenis_layanan'           => 'required|string',
-            'estimasi_jumlah_laundry' => 'nullable|string',
-            'tipe_antar_jemput'       => 'required|in:Antar Saja,Jemput Saja,Antar Jemput (PP)',
-        ]);
+   
 
-        $data['is_sorted'] = $data['is_sorted'] ?? 0;
-        $data['alamat_laundry'] = $data['alamat_laundry'] ?? '-';
+public function store(Request $request)
+{
+    $data = $request->validate([
+        'nama'                    => 'required|string|max:100',
+        'phone'                   => 'required|string|max:20',
+        'alamat_customer'         => 'required|string',
+        'alamat_laundry'          => 'nullable|string',
+        'phone_laundry'           => 'nullable|string|max:20',
+        'ongkos_pilah'            => 'nullable|integer|min:0',
+        'fee'                     => 'required_without:bundle_purchase_id|integer|min:0', // ✅ fee jadi opsional kalau pakai bundle
+        'bundle_purchase_id'      => 'nullable|exists:bundle_purchases,id', // ✅ baru
+        'is_sorted'               => 'nullable|boolean',
+        'note'                    => 'nullable|string',
+        'status'                  => 'nullable|in:Unconfirmed,Diproses,Dijemput,Mencari Laundry,Dicuci,Diantar,Selesai',
+        'dokumentasi_pakaian'     => 'nullable|url|max:500',
+        'tanggal_penjemputan'     => 'required|date_format:Y-m-d H:i',
+        'jenis_layanan'           => 'required|string',
+        'estimasi_jumlah_laundry' => 'nullable|string',
+        'tipe_antar_jemput'       => 'required|in:Antar Saja,Jemput Saja,Antar Jemput (PP)',
+    ]);
 
-        // Order dibuat baru belum pernah kena diskon apa pun,
-        // jadi fee_sebelum_diskon = fee yang diinput di awal.
-        $data['fee_sebelum_diskon'] = $data['fee'];
+    $data['is_sorted'] = $data['is_sorted'] ?? 0;
+    $data['alamat_laundry'] = $data['alamat_laundry'] ?? '-';
 
-        if (!$data['is_sorted']) {
-            $data['dokumentasi_pakaian'] = null;
-        }
-
-        // Status awal ditentukan oleh tipe_antar_jemput.
-        // "Jemput Saja" artinya driver hanya mengambil pesanan yang sudah
-        // ada di laundry (tidak perlu tahap Dijemput/Mencari Laundry),
-        // sehingga order langsung dibuat berstatus 'Dicuci' agar muncul
-        // di daftar pesanan tersedia untuk driver pada tahap tersebut.
-        if ($data['tipe_antar_jemput'] === 'Jemput Saja') {
-            $data['status'] = 'Dicuci';
-        } else {
-            $data['status'] = $data['status'] ?? 'Diproses';
-        }
-
-        $data['token'] = $this->generateUniqueToken();
-
-        Order::create($data);
-
-        return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $data['token']);
+    if (!$data['is_sorted']) {
+        $data['dokumentasi_pakaian'] = null;
     }
+
+    if ($data['tipe_antar_jemput'] === 'Jemput Saja') {
+        $data['status'] = 'Dicuci';
+    } else {
+        $data['status'] = $data['status'] ?? 'Diproses';
+    }
+
+    $data['token'] = $this->generateUniqueToken();
+
+    // ✅ Jika order pakai bundle, validasi + lock + override fee di sini,
+    // semua dalam satu transaction supaya konsisten dengan decrement kuota
+    if (!empty($data['bundle_purchase_id'])) {
+        $order = DB::transaction(function () use ($data) {
+            $bundlePurchase = BundlePurchase::where('id', $data['bundle_purchase_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$bundlePurchase || $bundlePurchase->status !== 'aktif' || $bundlePurchase->kuota_tersisa <= 0) {
+                throw ValidationException::withMessages([
+                    'bundle_purchase_id' => 'Bundle tidak aktif atau kuota sudah habis.',
+                ]);
+            }
+
+            if ($bundlePurchase->tanggal_berakhir && $bundlePurchase->tanggal_berakhir->isPast()) {
+                throw ValidationException::withMessages([
+                    'bundle_purchase_id' => 'Bundle sudah kedaluwarsa.',
+                ]);
+            }
+
+            // fee di-override dari harga per trip bundle (bukan input manual)
+            $data['fee'] = $bundlePurchase->harga_per_trip;
+            $data['fee_sebelum_diskon'] = $bundlePurchase->harga_per_trip;
+
+            $order = Order::create($data);
+
+            $bundlePurchase->decrement('kuota_tersisa');
+            if ($bundlePurchase->kuota_tersisa <= 0) {
+                $bundlePurchase->update(['status' => 'habis']);
+            }
+
+            $order->hitungPenghasilan();
+
+            return $order;
+        });
+    } else {
+        $data['fee_sebelum_diskon'] = $data['fee'];
+        $order = Order::create($data);
+    }
+
+    return redirect()->back()->with('success', 'Pesanan berhasil dibuat! Token: ' . $data['token']);
+}
 
     public function storeDraft(Request $request)
     {
@@ -179,10 +214,8 @@ class OrderController extends Controller
             $query->orderBy($sort, $direction);
         }
 
-        // REPEAT ORDER: nama yang muncul lebih dari 1 kali (dihitung dari SELURUH data,
-        // tidak terpengaruh search/filter/pagination di atas)
-        $repeatCustomers = Order::select('nama', \DB::raw('count(*) as total_order'))
-            ->groupBy('nama')
+        $repeatCustomers = Order::select('phone', 'nama', \DB::raw('count(*) as total_order'))
+            ->groupBy('phone', 'nama')
             ->having('total_order', '>', 1)
             ->orderByDesc('total_order')
             ->get();

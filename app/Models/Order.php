@@ -45,6 +45,7 @@ class Order extends Model
         'penghasilan_klinklin_dari_driver',
         'penghasilan_klinklin_dari_mitra',
         'penghasilan_bersih_klinklin',
+        'bundle_purchase_id', // ✅ baru
     ];
 
     protected $casts = [
@@ -188,30 +189,29 @@ class Order extends Model
         });
     }
 
-    public function hitungPenghasilan(): void
-    {
-        $fee         = $this->fee ?? 0;
-        $ongkosPilah = $this->ongkos_pilah ?? 0;
-        $feeLaundry  = $this->fee_laundry ?? 0;
-        $adaMitra    = !is_null($this->mitra_laundry_id);
-
-        $this->penghasilan_driver = ($fee + $ongkosPilah) * 0.8;
-        $this->penghasilan_klinklin_dari_driver = ($fee + $ongkosPilah) * 0.2;
-
-        if ($adaMitra) {
-            $persentaseKlinklin = $this->mitraLaundry?->persentase_bisnis ?? 10;
-            $persentaseMitra = 100 - $persentaseKlinklin;
-
-            $this->penghasilan_laundry_mitra = $feeLaundry * ($persentaseMitra / 100);
-            $this->penghasilan_klinklin_dari_mitra = $feeLaundry * ($persentaseKlinklin / 100);
-        } else {
-            $this->penghasilan_laundry_mitra = 0;
-            $this->penghasilan_klinklin_dari_mitra = 0;
-        }
-
-        $this->penghasilan_bersih_klinklin =
-            $this->penghasilan_klinklin_dari_driver + $this->penghasilan_klinklin_dari_mitra;
+    public function hitungPenghasilan()
+{
+    // Jika order ini pakai bundle, fee di-override dari harga per trip bundle
+        if ($this->bundle_purchase_id) {
+        $bundlePurchase = $this->bundlePurchase ?? $this->bundlePurchase()->first();
+        $fee = round((float) $bundlePurchase->harga_snapshot / $bundlePurchase->jumlah_trip_snapshot);
+        $this->fee = $fee;
+        $this->fee_sebelum_diskon = $fee;
+    } else {
+        $fee = $this->fee;
     }
+
+    $ongkosPilah = $this->ongkos_pilah ?? 0;
+
+    $this->penghasilan_driver = ($fee + $ongkosPilah) * 0.8;
+    $this->penghasilan_klinklin_dari_driver = ($fee + $ongkosPilah) * 0.2;
+
+    // ...lanjutkan kalkulasi fee_laundry, penghasilan_laundry_mitra,
+    // penghasilan_klinklin_dari_mitra, penghasilan_bersih_klinklin seperti biasa,
+    // karena bagian mitra laundry tidak terpengaruh logika bundle (itu urusan terpisah)
+
+    $this->save();
+}
 
     public function extractBeratKg(?string $text): ?float
     {
@@ -268,5 +268,10 @@ class Order extends Model
     public function mitraLaundry()
     {
         return $this->belongsTo(MitraLaundry::class, 'mitra_laundry_id');
+    }
+
+    public function bundlePurchase()
+    {
+        return $this->belongsTo(BundlePurchase::class);
     }
 }

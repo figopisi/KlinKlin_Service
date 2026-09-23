@@ -9,6 +9,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('asset/css/landingpage.css') }}">
+<style>
+    /* Modifier: pricing-head tanpa lead, judul center (khusus section Bundling) */
+    .pricing-head.center-only {
+        justify-content: center;
+        text-align: center;
+    }
+    .pricing-head.center-only .pricing-title {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+</style>
 </head>
 
 <body>
@@ -264,6 +275,52 @@
         </div>
     </div>
 </section>
+
+    <!-- ===== BUNDLING HEMAT ===== -->
+    <section id="bundling" class="pricing">
+        <span class="pricing-bubble" aria-hidden="true"></span>
+        <div class="pricing-head center-only">
+            <h2 class="pricing-title reveal" data-reveal="up" data-i18n-html="bundling_title">Penawaran <strong>Istimewa</strong><br><span class="pt-big">Bundling Hemat!</span></h2>
+        </div>
+
+        <div class="pricing-cards">
+            <!-- Reguler -->
+            <div class="price-card reveal" data-reveal="up" style="--delay:.1s">
+                <div class="pc-label" data-i18n="bd1_label">Reguler</div>
+                <div class="pc-price">Rp 50.000</div>
+                <div class="pc-sub" data-i18n-html="bd1_sub">Rp 12.500 <strong>pertripnya</strong></div>
+                <ul class="pc-list">
+                    <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n-html="bd1_a">Biaya termasuk <strong>pulang pergi</strong></span></li>
+                    <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n-html="bd1_b">Opsi paling pas buat <strong>mahasiswa</strong></span></li>
+                    <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n-html="bd1_c">Maksimal trip <strong>2 km</strong></span></li>
+                </ul>
+            </div>
+
+            <!-- Medium -->
+            <div class="price-card reveal" data-reveal="up" style="--delay:.2s">
+                <div class="pc-label" data-i18n="bd2_label">Medium</div>
+                <div class="pc-price">Rp 95.000</div>
+                <div class="pc-sub" data-i18n-html="bd2_sub">Rp 11.875 <strong>pertripnya</strong></div>
+                <ul class="pc-list">
+                    <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n-html="bd2_a">Harga <strong>lebih murah</strong></span></li>
+                    <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n-html="bd2_b">Biaya termasuk <strong>pulang pergi</strong></span></li>
+                    <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n-html="bd2_c">Maksimal trip <strong>2 km</strong></span></li>
+                </ul>
+            </div>
+
+            <!-- Super -->
+            <div class="price-card reveal" data-reveal="up" style="--delay:.3s">
+                <div class="pc-label" data-i18n="bd3_label">Super</div>
+                <div class="pc-price">Rp 135.000</div>
+                <div class="pc-sub" data-i18n-html="bd3_sub">Rp 11.250 <strong>pertripnya</strong></div>
+                <ul class="pc-list">
+                    <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="bd3_a">Harga paling murah</span></li>
+                    <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n-html="bd3_b">Biaya termasuk <strong>pulang pergi</strong></span></li>
+                    <li><span class="pc-chk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n-html="bd3_c">Maksimal trip <strong>2 km</strong></span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
 
 @include('footer')
 
